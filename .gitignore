@@ -1,0 +1,10 @@
+workspace.xml
+generate-sources.log
+.surefire*
+target
+*.iml
+modules.xml
+vcs.xml
+compiler.xml
+misc.xml
+encodings.xml
