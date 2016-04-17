@@ -92,7 +92,7 @@ public class LoginWSTest {
 
     @Test
     public void testShouldNotLoginNonExistingUser() {
-        assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" ).isOk().hasBody( "null" );
+        assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" ).hasCode( 500 ).hasBody( "" );
     }
 
     @Test
@@ -126,7 +126,7 @@ public class LoginWSTest {
 
         organizationStorage.store( organization );
 
-        final String id = authService.generateToken( user,"12345" ).get().id;
+        final String id = authService.generateToken( user, "12345" ).get().id;
 
         assertNotNull( id );
         assertDelete( HTTP_PREFIX + "/login/" + id ).hasCode( 204 );

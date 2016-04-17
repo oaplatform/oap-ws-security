@@ -51,7 +51,7 @@ public class AuthServiceTest extends AbstractTest {
     public void testShouldGenerateNewToken() {
         final User user = new User();
         user.email = "test@example.com";
-        user.password = "12345";
+        user.password = HashUtils.hash( "test", "12345" );
         user.role = Role.ADMIN;
 
         final Token token = authService.generateToken( user, "12345" ).get();
@@ -66,7 +66,7 @@ public class AuthServiceTest extends AbstractTest {
     public void testShouldDeleteExpiredToken() throws InterruptedException {
         final User user = new User();
         user.email = "test@example.com";
-        user.password = "12345";
+        user.password = HashUtils.hash( "test", "12345" );
         user.role = Role.ADMIN;
 
         authService = new AuthService( 0, "test" );
