@@ -23,6 +23,7 @@
  */
 
 package oap.ws.security.server;
+
 import oap.application.Application;
 import oap.concurrent.SynchronizedThread;
 import oap.http.PlainHttpListener;
@@ -30,6 +31,7 @@ import oap.http.Server;
 import oap.io.Resources;
 import oap.json.TypeIdFactory;
 import oap.testng.Env;
+import oap.ws.SessionManager;
 import oap.ws.WebServices;
 import oap.ws.WsConfig;
 import oap.ws.security.domain.Organization;
@@ -50,7 +52,7 @@ public class LoginWSTest {
     private static final String SALT = "test";
 
     private final Server server = new Server( 100 );
-    private final WebServices webServices = new WebServices( server,
+    private final WebServices webServices = new WebServices( server, new SessionManager( 10, null, "/" ),
         WsConfig.CONFIGURATION.fromResource( getClass(), "ws-login.conf" ) );
 
     private OrganizationStorage organizationStorage;
@@ -64,11 +66,11 @@ public class LoginWSTest {
         TypeIdFactory.register( Organization.class, Organization.class.getName() );
 
         organizationStorage = new OrganizationStorage( Resources.filePath( LoginWSTest.class, "" ).get() );
-        authService = new AuthService( 1 );
+        authService = new AuthService( 1, "test" );
 
         organizationStorage.start();
 
-        Application.register( "ws-login", new LoginWS( organizationStorage, authService, SALT ) );
+        Application.register( "ws-login", new LoginWS( organizationStorage, authService, null, 10 ) );
 
         webServices.start();
         listener = new SynchronizedThread( new PlainHttpListener( server, Env.port() ) );
@@ -124,7 +126,7 @@ public class LoginWSTest {
 
         organizationStorage.store( organization );
 
-        final String id = authService.generateToken( user ).id;
+        final String id = authService.generateToken( user,"12345" ).get().id;
 
         assertNotNull( id );
         assertDelete( HTTP_PREFIX + "/login/" + id ).hasCode( 204 );

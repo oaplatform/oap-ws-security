@@ -25,7 +25,13 @@
 package oap.ws.security.domain;
 
 public enum Role {
-    ADMIN,
-    ORGANIZATION_ADMIN,
-    USER
+    ADMIN( 0 ),
+    ORGANIZATION_ADMIN( 1 ),
+    USER( 2 );
+
+    public final int precedence;
+
+    Role( int precedence ) {
+        this.precedence = precedence;
+    }
 }

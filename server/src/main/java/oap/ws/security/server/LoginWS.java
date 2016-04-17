@@ -27,12 +27,14 @@ package oap.ws.security.server;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import lombok.extern.slf4j.Slf4j;
+import oap.http.HttpResponse;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
 import oap.ws.security.domain.Organization;
 import oap.ws.security.domain.Token;
 import oap.ws.security.domain.User;
 import org.apache.commons.collections4.CollectionUtils;
+import org.joda.time.DateTime;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,16 +49,19 @@ import static oap.ws.WsParam.From.QUERY;
 public class LoginWS extends OrganizationValidator {
 
     private final AuthService authService;
-    private final String salt;
+    private final String cookieDomain;
+    private final DateTime cookieExpiration;
 
-    public LoginWS( OrganizationStorage organizationStorage, AuthService authService, String salt ) {
+    public LoginWS( OrganizationStorage organizationStorage, AuthService authService,
+                    String cookieDomain, int cookieExpiration ) {
         super( organizationStorage );
         this.authService = authService;
-        this.salt = salt;
+        this.cookieDomain = cookieDomain;
+        this.cookieExpiration = DateTime.now().plusMinutes( cookieExpiration );
     }
 
     @WsMethod( method = GET, path = "/" )
-    public Token login( @WsParam( from = QUERY ) String email, @WsParam( from = QUERY ) String password ) {
+    public HttpResponse login( @WsParam( from = QUERY ) String email, @WsParam( from = QUERY ) String password ) {
 
         final List<Organization.Users> usersList = organizationStorage.select()
             .map( organization -> organization.users )
@@ -73,14 +78,22 @@ public class LoginWS extends OrganizationValidator {
             if( userOptional.isPresent() ) {
                 final User user = userOptional.get();
 
-                final String inputPassword = HashUtils.hash( salt, password );
-                if( user.password.equals( inputPassword ) ) {
-                    return authService.generateToken( user );
+                final Optional<Token> optionalToken = authService.generateToken( user, password );
+
+                if( optionalToken.isPresent() ) {
+                    final Token token = optionalToken.get();
+                    return HttpResponse.ok( token ).withHeader( "Authorization", token.id )
+                        .withCookie( new HttpResponse.CookieBuilder()
+                            .withCustomValue( "Authorization", token.id )
+                            .withDomain( cookieDomain )
+                            .withExpires( cookieExpiration )
+                            .build()
+                        );
                 }
             }
         }
 
-        return null;
+        return HttpResponse.status( 500 );
     }
 
     @WsMethod( method = DELETE, path = "/{tokenId}" )

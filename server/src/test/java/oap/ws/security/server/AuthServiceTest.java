@@ -23,6 +23,7 @@
  */
 
 package oap.ws.security.server;
+
 import oap.testng.AbstractTest;
 import oap.ws.security.domain.Role;
 import oap.ws.security.domain.Token;
@@ -30,6 +31,8 @@ import oap.ws.security.domain.User;
 import oap.ws.security.server.AuthService;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
+
+import java.util.Optional;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -41,7 +44,7 @@ public class AuthServiceTest extends AbstractTest {
 
     @BeforeTest
     public void setUp() {
-        authService = new AuthService( 1 );
+        authService = new AuthService( 1, "test" );
     }
 
     @Test
@@ -51,10 +54,10 @@ public class AuthServiceTest extends AbstractTest {
         user.password = "12345";
         user.role = Role.ADMIN;
 
-        final Token token = authService.generateToken( user );
+        final Token token = authService.generateToken( user, "12345" ).get();
 
-        assertEquals( token.role, Role.ADMIN );
-        assertEquals( token.userEmail, "test@example.com" );
+        assertEquals( token.user.role, Role.ADMIN );
+        assertEquals( token.user.email, "test@example.com" );
         assertNotNull( token.id );
         assertNotNull( token.created );
     }
@@ -66,9 +69,9 @@ public class AuthServiceTest extends AbstractTest {
         user.password = "12345";
         user.role = Role.ADMIN;
 
-        authService = new AuthService( 0 );
+        authService = new AuthService( 0, "test" );
 
-        final String id = authService.generateToken( user ).id;
+        final String id = authService.generateToken( user, "12345" ).get().id;
         assertNotNull( id );
 
         Thread.sleep( 100 );

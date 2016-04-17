@@ -17,14 +17,19 @@
             <version>1.0</version>
         </dependency>
         <dependency>
+            <groupId>oap-ws-security</groupId>
+            <artifactId>oap-ws-security-client</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
             <groupId>oap</groupId>
             <artifactId>oap-ws</artifactId>
-            <version>1.11.16</version>
+            <version>1.12.1</version>
         </dependency>
         <dependency>
             <groupId>oap</groupId>
             <artifactId>oap-storage</artifactId>
-            <version>1.11.16</version>
+            <version>1.12.1</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

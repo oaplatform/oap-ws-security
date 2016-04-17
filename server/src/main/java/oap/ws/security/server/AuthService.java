@@ -40,39 +40,44 @@ import java.util.concurrent.TimeUnit;
 public class AuthService {
 
     private final Cache<String, Token> tokenStorage;
+    private final String salt;
 
-    public AuthService( int expirationTime ) {
+    public AuthService( int expirationTime, String salt ) {
         this.tokenStorage = CacheBuilder.newBuilder()
             .expireAfterAccess( expirationTime, TimeUnit.MINUTES )
             .build();
+        this.salt = salt;
     }
 
-    public Token generateToken( User user ) {
-        final List<Token> tokens = new ArrayList<>();
+    public Optional<Token> generateToken( User user, String password ) {
+        final String inputPassword = HashUtils.hash( salt, password );
+        if( user.password.equals( inputPassword ) ) {
+            final List<Token> tokens = new ArrayList<>();
 
-        tokenStorage.asMap().forEach( ( s, token ) -> {
-            if( token.userEmail.equals( user.email ) ) {
-                tokens.add( token );
+            tokenStorage.asMap().forEach( ( s, token ) -> {
+                if( token.user.email.equals( user.email ) ) {
+                    tokens.add( token );
+                }
+            } );
+
+            if( tokens.isEmpty() ) {
+                final Token token = new Token();
+                token.user = user;
+                token.created = DateTime.now();
+                token.id = UUID.randomUUID().toString();
+
+                tokenStorage.put( token.id, token );
+
+                return Optional.of( token );
+            } else {
+                final Token existingToken = Iterables.getOnlyElement( tokens );
+
+                tokenStorage.put( existingToken.id, existingToken );
+
+                return Optional.of( existingToken );
             }
-        } );
-
-        if( tokens.isEmpty() ) {
-            final Token token = new Token();
-            token.userEmail = user.email;
-            token.role = user.role;
-            token.created = DateTime.now();
-            token.id = UUID.randomUUID().toString();
-
-            tokenStorage.put( token.id, token );
-
-            return token;
-        } else {
-            final Token existingToken = Iterables.getOnlyElement( tokens );
-
-            tokenStorage.put( existingToken.id, existingToken );
-
-            return existingToken;
         }
+        return Optional.empty();
     }
 
     public Optional<Token> getToken( String tokenId ) {
