@@ -27,6 +27,7 @@ package oap.ws.security.server;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
+import lombok.extern.slf4j.Slf4j;
 import oap.ws.security.domain.Token;
 import oap.ws.security.domain.User;
 import org.joda.time.DateTime;
@@ -37,6 +38,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class AuthService {
 
     private final Cache<String, Token> tokenStorage;
@@ -61,6 +63,7 @@ public class AuthService {
             } );
 
             if( tokens.isEmpty() ) {
+                log.debug( "Generating new token for user [{}]...", user.email );
                 final Token token = new Token();
                 token.user = user;
                 token.created = DateTime.now();
@@ -72,6 +75,7 @@ public class AuthService {
             } else {
                 final Token existingToken = Iterables.getOnlyElement( tokens );
 
+                log.debug( "Updating existing token for user [{}]...", user.email );
                 tokenStorage.put( existingToken.id, existingToken );
 
                 return Optional.of( existingToken );
@@ -85,6 +89,7 @@ public class AuthService {
     }
 
     public void deleteToken( String tokenId ) {
+        log.debug( "Deleting token [{}]...", tokenId );
         tokenStorage.invalidate( tokenId );
     }
 }

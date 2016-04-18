@@ -74,26 +74,31 @@ public class LoginWS extends OrganizationValidator {
         if( CollectionUtils.isNotEmpty( usersList ) ) {
             final Organization.Users users = Iterables.getOnlyElement( usersList );
 
-            final Optional<User> userOptional = users.get( email );
-            if( userOptional.isPresent() ) {
-                final User user = userOptional.get();
+            final User user = users.get( email ).get();
 
-                final Optional<Token> optionalToken = authService.generateToken( user, password );
+            final Optional<Token> optionalToken = authService.generateToken( user, password );
 
-                if( optionalToken.isPresent() ) {
-                    final Token token = optionalToken.get();
-                    return HttpResponse.ok( token ).withHeader( "Authorization", token.id )
-                        .withCookie( new HttpResponse.CookieBuilder()
-                            .withCustomValue( "Authorization", token.id )
-                            .withDomain( cookieDomain )
-                            .withExpires( cookieExpiration )
-                            .build()
-                        );
-                }
+            if( optionalToken.isPresent() ) {
+                final Token token = optionalToken.get();
+                return HttpResponse.ok( token ).withHeader( "Authorization", token.id )
+                    .withCookie( new HttpResponse.CookieBuilder()
+                        .withCustomValue( "Authorization", token.id )
+                        .withDomain( cookieDomain )
+                        .withExpires( cookieExpiration )
+                        .build()
+                    );
+            } else {
+                final HttpResponse httpResponse = HttpResponse.status( 500 );
+                httpResponse.reasonPhrase = "Cannot generate token for user " + email;
+
+                return httpResponse;
             }
-        }
+        } else {
+            final HttpResponse httpResponse = HttpResponse.status( 500 );
+            httpResponse.reasonPhrase = "User " + email + " is unknown";
 
-        return HttpResponse.status( 500 );
+            return httpResponse;
+        }
     }
 
     @WsMethod( method = DELETE, path = "/{tokenId}" )

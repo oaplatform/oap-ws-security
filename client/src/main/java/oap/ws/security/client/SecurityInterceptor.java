@@ -24,6 +24,7 @@
 
 package oap.ws.security.client;
 
+import lombok.extern.slf4j.Slf4j;
 import oap.http.HttpResponse;
 import oap.http.Request;
 import oap.http.Session;
@@ -37,6 +38,7 @@ import java.net.HttpCookie;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 public class SecurityInterceptor implements Interceptor {
 
     private final TokenService tokenService;
@@ -62,9 +64,12 @@ public class SecurityInterceptor implements Interceptor {
             final Optional<Object> optionalUser = session.get( "user" );
             if( optionalUser.isPresent() ) {
                 final User user = ( User ) optionalUser.get();
+                log.trace( "User [{}] found in session",user.email );
+
                 final Role methodRole = annotation.get().role();
 
                 if( user.role.precedence > methodRole.precedence ) {
+                    log.debug( "User [{}] has no access to method [{}]", user.email,method.name() );
                     return Optional.of( HttpResponse.status( 403 ) );
                 }
             } else {
@@ -72,13 +77,22 @@ public class SecurityInterceptor implements Interceptor {
                     request.header( "Authorization" ).get() : getTokenFromCookie( request.cookies() );
 
                 if( sessionToken == null ) {
-                    return Optional.of( HttpResponse.status( 401 ) );
+                    log.debug( "Session token is missing in header or cookie for requested location",
+                        request.context.location );
+                    final HttpResponse response = HttpResponse.status( 401 );
+                    response.reasonPhrase = "Session token is missing in header or cookie";
+
+                    return Optional.of( response );
                 }
 
                 final Optional<Token> optionalToken = tokenService.getToken( sessionToken );
 
                 if( !optionalToken.isPresent() ) {
-                    return Optional.of( HttpResponse.status( 401 ) );
+                    log.debug( "Token id [{}] expired or was not created", sessionToken );
+                    final HttpResponse response = HttpResponse.status( 401 );
+                    response.reasonPhrase = "Auth token for user expired or was not created";
+
+                    return Optional.of( response );
                 }
 
                 final Token token = optionalToken.get();
@@ -90,6 +104,7 @@ public class SecurityInterceptor implements Interceptor {
                 final Role methodRole = annotation.get().role();
 
                 if( user.role.precedence > methodRole.precedence ) {
+                    log.debug( "User [{}] has no access to method [{}]", user.email,method.name() );
                     return Optional.of( HttpResponse.status( 403 ) );
                 }
             }
