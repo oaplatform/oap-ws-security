@@ -27,6 +27,7 @@ package oap.ws.security.server;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
+import lombok.extern.slf4j.Slf4j;
 import oap.ws.security.domain.Token;
 import oap.ws.security.domain.User;
 import org.joda.time.DateTime;
@@ -37,42 +38,50 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class AuthService {
 
     private final Cache<String, Token> tokenStorage;
+    private final String salt;
 
-    public AuthService( int expirationTime ) {
+    public AuthService( int expirationTime, String salt ) {
         this.tokenStorage = CacheBuilder.newBuilder()
             .expireAfterAccess( expirationTime, TimeUnit.MINUTES )
             .build();
+        this.salt = salt;
     }
 
-    public Token generateToken( User user ) {
-        final List<Token> tokens = new ArrayList<>();
+    public Optional<Token> generateToken( User user, String password ) {
+        final String inputPassword = HashUtils.hash( salt, password );
+        if( user.password.equals( inputPassword ) ) {
+            final List<Token> tokens = new ArrayList<>();
 
-        tokenStorage.asMap().forEach( ( s, token ) -> {
-            if( token.userEmail.equals( user.email ) ) {
-                tokens.add( token );
+            tokenStorage.asMap().forEach( ( s, token ) -> {
+                if( token.user.email.equals( user.email ) ) {
+                    tokens.add( token );
+                }
+            } );
+
+            if( tokens.isEmpty() ) {
+                log.debug( "Generating new token for user [{}]...", user.email );
+                final Token token = new Token();
+                token.user = user;
+                token.created = DateTime.now();
+                token.id = UUID.randomUUID().toString();
+
+                tokenStorage.put( token.id, token );
+
+                return Optional.of( token );
+            } else {
+                final Token existingToken = Iterables.getOnlyElement( tokens );
+
+                log.debug( "Updating existing token for user [{}]...", user.email );
+                tokenStorage.put( existingToken.id, existingToken );
+
+                return Optional.of( existingToken );
             }
-        } );
-
-        if( tokens.isEmpty() ) {
-            final Token token = new Token();
-            token.userEmail = user.email;
-            token.role = user.role;
-            token.created = DateTime.now();
-            token.id = UUID.randomUUID().toString();
-
-            tokenStorage.put( token.id, token );
-
-            return token;
-        } else {
-            final Token existingToken = Iterables.getOnlyElement( tokens );
-
-            tokenStorage.put( existingToken.id, existingToken );
-
-            return existingToken;
         }
+        return Optional.empty();
     }
 
     public Optional<Token> getToken( String tokenId ) {
@@ -80,6 +89,7 @@ public class AuthService {
     }
 
     public void deleteToken( String tokenId ) {
+        log.debug( "Deleting token [{}]...", tokenId );
         tokenStorage.invalidate( tokenId );
     }
 }

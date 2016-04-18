@@ -22,19 +22,23 @@
  * SOFTWARE.
  */
 
-package oap.ws.security.domain;
+package oap.ws.security.server;
 
-import lombok.ToString;
+import oap.ws.security.client.TokenService;
+import oap.ws.security.domain.Token;
 
-import java.io.Serializable;
+import java.util.Optional;
 
-@ToString
-public class User implements Serializable {
+public class TokenServiceImpl implements TokenService {
 
-    private static final long serialVersionUID = -999111284666144557L;
+    private final AuthService authService;
 
-    public String email;
-    public String password;
-    public Role role;
-    public String organization;
+    public TokenServiceImpl( AuthService authService ) {
+        this.authService = authService;
+    }
+
+    @Override
+    public Optional<Token> getToken( String tokenId ) {
+        return authService.getToken( tokenId );
+    }
 }

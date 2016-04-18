@@ -22,19 +22,16 @@
  * SOFTWARE.
  */
 
-package oap.ws.security.domain;
+package oap.ws.security.client;import oap.ws.security.domain.Role;
 
-import lombok.ToString;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.io.Serializable;
+@Target( ElementType.METHOD )
+@Retention( RetentionPolicy.RUNTIME )
+public @interface WsSecurity {
 
-@ToString
-public class User implements Serializable {
-
-    private static final long serialVersionUID = -999111284666144557L;
-
-    public String email;
-    public String password;
-    public Role role;
-    public String organization;
+    Role role();
 }
