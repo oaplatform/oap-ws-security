@@ -24,11 +24,13 @@
 
 package oap.ws.security.domain;
 
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import java.io.Serializable;
 
 @ToString
+@EqualsAndHashCode
 public class User implements Serializable {
 
     private static final long serialVersionUID = -999111284666144557L;
@@ -36,5 +38,6 @@ public class User implements Serializable {
     public String email;
     public String password;
     public Role role;
-    public String organization;
+    public String organizationId;
+    public String organizationName;
 }

@@ -32,6 +32,6 @@ import java.nio.file.Path;
 public class OrganizationStorage extends FileStorage<Organization> {
 
     public OrganizationStorage( Path path ) {
-        super( path, organization -> organization.name );
+        super( path, organization -> organization.id );
     }
 }

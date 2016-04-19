@@ -26,7 +26,6 @@ package oap.ws.security.domain;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import oap.util.AssocList;
 
 import java.io.Serializable;
 
@@ -36,15 +35,7 @@ public class Organization implements Serializable {
 
    private static final long serialVersionUID = -4541112846071445501L;
 
+   public String id;
    public String name;
-   public Users users = new Users();
-
-   public static class Users extends AssocList<String, User> implements Serializable {
-      private static final long serialVersionUID = 8765264434840112345L;
-
-      @Override
-      protected String keyOf( User user) {
-         return user.email;
-      }
-   }
+   public String description;
 }

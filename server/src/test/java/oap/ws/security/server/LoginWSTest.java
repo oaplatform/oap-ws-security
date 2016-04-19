@@ -34,7 +34,6 @@ import oap.testng.Env;
 import oap.ws.SessionManager;
 import oap.ws.WebServices;
 import oap.ws.WsConfig;
-import oap.ws.security.domain.Organization;
 import oap.ws.security.domain.Role;
 import oap.ws.security.domain.User;
 import org.testng.annotations.AfterClass;
@@ -55,7 +54,7 @@ public class LoginWSTest {
     private final WebServices webServices = new WebServices( server, new SessionManager( 10, null, "/" ),
         WsConfig.CONFIGURATION.fromResource( getClass(), "ws-login.conf" ) );
 
-    private OrganizationStorage organizationStorage;
+    private UserStorage userStorage;
     private AuthService authService;
 
     private SynchronizedThread listener;
@@ -63,14 +62,13 @@ public class LoginWSTest {
     @BeforeClass
     public void startServer() {
         TypeIdFactory.register( User.class, User.class.getName() );
-        TypeIdFactory.register( Organization.class, Organization.class.getName() );
 
-        organizationStorage = new OrganizationStorage( Resources.filePath( LoginWSTest.class, "" ).get() );
+        userStorage = new UserStorage( Resources.filePath( LoginWSTest.class, "" ).get() );
         authService = new AuthService( 1, "test" );
 
-        organizationStorage.start();
+        userStorage.start();
 
-        Application.register( "ws-login", new LoginWS( organizationStorage, authService, null, 10 ) );
+        Application.register( "ws-login", new LoginWS( userStorage, authService, null, 10 ) );
 
         webServices.start();
         listener = new SynchronizedThread( new PlainHttpListener( server, Env.port() ) );
@@ -87,7 +85,7 @@ public class LoginWSTest {
 
     @BeforeMethod
     public void setUp() {
-        organizationStorage.clear();
+        userStorage.clear();
     }
 
     @Test
@@ -97,16 +95,14 @@ public class LoginWSTest {
 
     @Test
     public void testShouldLoginExistingUser() {
-        final Organization organization = new Organization();
         final User user = new User();
         user.email = "test@example.com";
         user.role = Role.ADMIN;
         user.password = HashUtils.hash( SALT, "12345" );
+        user.organizationId = "987654321";
+        user.organizationName = "test";
 
-        organization.name = "test";
-        organization.users.add( 0, user );
-
-        organizationStorage.store( organization );
+        userStorage.store( user );
 
         assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" )
             .isOk()
@@ -115,16 +111,12 @@ public class LoginWSTest {
 
     @Test
     public void testShouldLogoutExistingUser() {
-        final Organization organization = new Organization();
         final User user = new User();
         user.email = "test@example.com";
         user.role = Role.ADMIN;
         user.password = HashUtils.hash( SALT, "12345" );
-
-        organization.name = "test";
-        organization.users.add( 0, user );
-
-        organizationStorage.store( organization );
+        user.organizationId = "987654321";
+        user.organizationName = "test";
 
         final String id = authService.generateToken( user, "12345" ).get().id;
 

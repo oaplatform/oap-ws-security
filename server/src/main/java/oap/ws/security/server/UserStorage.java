@@ -24,22 +24,14 @@
 
 package oap.ws.security.server;
 
-import oap.util.Lists;
+import oap.storage.FileStorage;
+import oap.ws.security.domain.User;
 
-import java.util.List;
+import java.nio.file.Path;
 
-public abstract class OrganizationValidator {
+public class UserStorage extends FileStorage<User> {
 
-    protected final OrganizationStorage organizationStorage;
-
-    public OrganizationValidator( OrganizationStorage organizationStorage ) {
-        this.organizationStorage = organizationStorage;
+    public UserStorage( Path path ) {
+        super( path, user -> user.email );
     }
-
-    public List<String> organizationExists( String oname ) {
-        return organizationStorage
-            .get( oname ).isPresent() ? Lists.empty() :
-            Lists.of( "Organization " + oname + " does not exist." );
-    }
-
 }
