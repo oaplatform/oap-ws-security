@@ -27,6 +27,7 @@ package oap.ws.security.server;
 import lombok.extern.slf4j.Slf4j;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
+import oap.ws.security.client.WsSecurity;
 import oap.ws.security.domain.Organization;
 import oap.ws.security.domain.Role;
 import oap.ws.security.domain.User;
@@ -50,21 +51,25 @@ public class OrganizationWS {
     }
 
     @WsMethod( method = POST, path = "/store" )
+    @WsSecurity( role = Role.ADMIN )
     public void store( @WsParam( from = BODY ) Organization organization ) {
         organizationStorage.store( organization );
     }
 
     @WsMethod( method = GET, path = "/{oid}" )
+    @WsSecurity( role = Role.USER )
     public Optional<Organization> getOrganization( @WsParam( from = PATH ) String oid ) {
         return organizationStorage.get( oid );
     }
 
     @WsMethod( method = DELETE, path = "/remove/{oid}" )
+    @WsSecurity( role = Role.ADMIN )
     public void removeOrganization( @WsParam( from = PATH ) String oid ) {
         organizationStorage.delete( oid );
     }
 
     @WsMethod( method = POST, path = "/{oid}/store-user" )
+    @WsSecurity( role = Role.USER )
     public void storeUser( @WsParam( from = BODY ) User user, @WsParam( from = PATH ) String oid,
                            @WsParam( from = SESSION ) User userSession ) {
 
@@ -112,6 +117,7 @@ public class OrganizationWS {
     }
 
     @WsMethod( method = GET, path = "/{oid}/user/{email}" )
+    @WsSecurity( role = Role.ORGANIZATION_ADMIN )
     public Optional<User> getUser( @WsParam( from = PATH ) String oid,
                                    @WsParam( from = PATH ) String email ) {
         if( organizationStorage.get( oid ).isPresent() ) {
@@ -131,6 +137,7 @@ public class OrganizationWS {
     }
 
     @WsMethod( method = DELETE, path = "/{oid}/remove-user/{email}" )
+    @WsSecurity( role = Role.ORGANIZATION_ADMIN )
     public void removeUser( @WsParam( from = PATH ) String oid,
                             @WsParam( from = PATH ) String email ) {
         if( organizationStorage.get( oid ).isPresent() ) {
