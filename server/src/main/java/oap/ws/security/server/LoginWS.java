@@ -24,37 +24,32 @@
 
 package oap.ws.security.server;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import lombok.extern.slf4j.Slf4j;
 import oap.http.HttpResponse;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
-import oap.ws.security.domain.Organization;
 import oap.ws.security.domain.Token;
 import oap.ws.security.domain.User;
-import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.DateTime;
 
-import java.util.List;
 import java.util.Optional;
 
-import static java.lang.String.format;
 import static oap.http.Request.HttpMethod.DELETE;
 import static oap.http.Request.HttpMethod.GET;
 import static oap.ws.WsParam.From.PATH;
 import static oap.ws.WsParam.From.QUERY;
 
 @Slf4j
-public class LoginWS extends OrganizationValidator {
+public class LoginWS {
 
+    private final UserStorage userStorage;
     private final AuthService authService;
     private final String cookieDomain;
     private final DateTime cookieExpiration;
 
-    public LoginWS( OrganizationStorage organizationStorage, AuthService authService,
+    public LoginWS( UserStorage userStorage, AuthService authService,
                     String cookieDomain, int cookieExpiration ) {
-        super( organizationStorage );
+        this.userStorage = userStorage;
         this.authService = authService;
         this.cookieDomain = cookieDomain;
         this.cookieExpiration = DateTime.now().plusMinutes( cookieExpiration );
@@ -63,18 +58,9 @@ public class LoginWS extends OrganizationValidator {
     @WsMethod( method = GET, path = "/" )
     public HttpResponse login( @WsParam( from = QUERY ) String email, @WsParam( from = QUERY ) String password ) {
 
-        final List<Organization.Users> usersList = organizationStorage.select()
-            .map( organization -> organization.users )
-            .filter( users -> users.get( email ).isPresent() )
-            .toList();
-
-        Preconditions.checkState( usersList.size() < 2,
-            format( "There are multiple users with the same email [%s]", email ) );
-
-        if( CollectionUtils.isNotEmpty( usersList ) ) {
-            final Organization.Users users = Iterables.getOnlyElement( usersList );
-
-            final User user = users.get( email ).get();
+        final Optional<User> userOptional = userStorage.get( email );
+        if( userOptional.isPresent() ) {
+            final User user = userOptional.get();
 
             final Optional<Token> optionalToken = authService.generateToken( user, password );
 
@@ -88,12 +74,16 @@ public class LoginWS extends OrganizationValidator {
                         .build()
                     );
             } else {
+                log.error( "Cannot generate token for user " + email );
+
                 final HttpResponse httpResponse = HttpResponse.status( 500 );
                 httpResponse.reasonPhrase = "Cannot generate token for user " + email;
 
                 return httpResponse;
             }
         } else {
+            log.debug( "User " + email + " is unknown" );
+
             final HttpResponse httpResponse = HttpResponse.status( 500 );
             httpResponse.reasonPhrase = "User " + email + " is unknown";
 

@@ -97,7 +97,8 @@ public class SecurityInterceptorTest {
         final User user = new User();
         user.role = Role.ADMIN;
         user.email = "test@example.com";
-        user.organization = "testOrg";
+        user.organizationName = "testOrg";
+        user.organizationId = "987654321";
         user.password = "12345";
 
         final Token token = new Token();
