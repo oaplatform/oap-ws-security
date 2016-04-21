@@ -61,15 +61,23 @@ public class SecurityInterceptor implements Interceptor {
     public Optional<HttpResponse> intercept( Request request, Session session, Reflection.Method method ) {
         final Optional<WsSecurity> annotation = method.findAnnotation( WsSecurity.class );
         if( annotation.isPresent() ) {
+            if( session == null ) {
+                log.error( "Session doesn't exist; check if service is session aware" );
+                final HttpResponse response = HttpResponse.status( 500 );
+                response.reasonPhrase = "Session doesn't exist; check if service is session aware";
+
+                return Optional.of( response );
+            }
+
             final Optional<Object> optionalUser = session.get( "user" );
             if( optionalUser.isPresent() ) {
                 final User user = ( User ) optionalUser.get();
-                log.trace( "User [{}] found in session",user.email );
+                log.trace( "User [{}] found in session", user.email );
 
                 final Role methodRole = annotation.get().role();
 
                 if( user.role.precedence > methodRole.precedence ) {
-                    log.debug( "User [{}] has no access to method [{}]", user.email,method.name() );
+                    log.debug( "User [{}] has no access to method [{}]", user.email, method.name() );
                     return Optional.of( HttpResponse.status( 403 ) );
                 }
             } else {
@@ -104,7 +112,7 @@ public class SecurityInterceptor implements Interceptor {
                 final Role methodRole = annotation.get().role();
 
                 if( user.role.precedence > methodRole.precedence ) {
-                    log.debug( "User [{}] has no access to method [{}]", user.email,method.name() );
+                    log.debug( "User [{}] has no access to method [{}]", user.email, method.name() );
                     return Optional.of( HttpResponse.status( 403 ) );
                 }
             }
