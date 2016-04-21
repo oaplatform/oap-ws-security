@@ -5,33 +5,33 @@
     <parent>
         <artifactId>oap-ws-security</artifactId>
         <groupId>oap-ws-security</groupId>
-        <version>1.4.2</version>
+        <version>1.4.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>oap-ws-security-server</artifactId>
-    <version>1.4.2</version>
+    <version>1.4.3</version>
 
     <dependencies>
         <dependency>
             <groupId>oap-ws-security</groupId>
             <artifactId>oap-ws-security-domain</artifactId>
-            <version>1.4.2</version>
+            <version>1.4.3</version>
         </dependency>
         <dependency>
             <groupId>oap-ws-security</groupId>
             <artifactId>oap-ws-security-client</artifactId>
-            <version>1.4.2</version>
+            <version>1.4.3</version>
         </dependency>
         <dependency>
             <groupId>oap</groupId>
             <artifactId>oap-ws</artifactId>
-            <version>1.12.8</version>
+            <version>1.12.10</version>
         </dependency>
         <dependency>
             <groupId>oap</groupId>
             <artifactId>oap-storage</artifactId>
-            <version>1.12.8</version>
+            <version>1.12.10</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
