@@ -7,7 +7,7 @@
     <groupId>oap-ws-security</groupId>
     <artifactId>oap-ws-security</artifactId>
     <packaging>pom</packaging>
-    <version>1.4.6</version>
+    <version>1.4.7</version>
     <modules>
         <module>client</module>
         <module>server</module>
@@ -34,7 +34,7 @@
         <slf4j.version>1.7.13</slf4j.version>
         <httpcomponents.version>4.4.4</httpcomponents.version>
         <joda.version>2.9.3</joda.version>
-        <jackson.version>2.7.1</jackson.version>
+        <jackson.version>2.7</jackson.version>
         <lombok.version>1.16.6</lombok.version>
     </properties>
 

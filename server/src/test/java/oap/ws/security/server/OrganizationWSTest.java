@@ -60,8 +60,6 @@ public class OrganizationWSTest {
 
     @BeforeClass
     public void startServer() {
-        TypeIdFactory.register( User.class, User.class.getName() );
-
         userStorage = new UserStorage( Resources.filePath( OrganizationWSTest.class, "" ).get() );
         organizationStorage = new OrganizationStorage( Resources.filePath( OrganizationWSTest.class, "" ).get() );
 
@@ -92,7 +90,7 @@ public class OrganizationWSTest {
     @Test
     public void testShouldStoreGetDeleteOrganization() {
         final String request = Resources.readString( getClass(), getClass().getSimpleName() + "/"
-            + "organization.json" ).get();
+            + "12345.json" ).get();
 
         assertPost( HTTP_PREFIX + "/organization/store", request, ContentType.APPLICATION_JSON )
             .hasCode( 204 );
