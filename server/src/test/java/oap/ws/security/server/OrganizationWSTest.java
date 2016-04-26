@@ -43,7 +43,10 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Optional;
+
 import static oap.http.testng.HttpAsserts.*;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 
@@ -94,8 +97,18 @@ public class OrganizationWSTest {
 
         assertPost( HTTP_PREFIX + "/organization/store", request, ContentType.APPLICATION_JSON )
             .hasCode( 204 );
-        assertGet( HTTP_PREFIX + "/organization/12345" )
-            .hasCode( 200 ).hasBody( "{\"id\":\"12345\",\"name\":\"test\",\"description\":\"test organization\"}" );
+        final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
+
+        final User sessionUser = new User();
+        sessionUser.organizationId = "12345";
+        sessionUser.role = Role.USER;
+
+        final Optional<Organization> organization = organizationWS.getOrganization( "12345", sessionUser );
+
+        assertEquals( organization.get().id, "12345" );
+        assertEquals( organization.get().name, "test" );
+        assertEquals( organization.get().description, "test organization" );
+
         assertDelete( HTTP_PREFIX + "/organization/remove/12345" ).hasCode( 204 );
 
         assertFalse( organizationStorage.get( "12345" ).isPresent() );
@@ -185,7 +198,7 @@ public class OrganizationWSTest {
 
     @Test( expectedExceptions = { IllegalStateException.class },
         expectedExceptionsMessageRegExp = "User with role ORGANIZATION_ADMIN can't grant role ADMIN to user " +
-            "test@example.com")
+            "test@example.com" )
     public void testShouldNotSaveUserWithHigherRoleThanSessionUserIfNotAdmin() {
         final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
         final User user = new User();
@@ -207,7 +220,7 @@ public class OrganizationWSTest {
 
     @Test( expectedExceptions = { IllegalStateException.class },
         expectedExceptionsMessageRegExp = "User org-admin@example.com cannot operate on users from " +
-            "different organization 12345")
+            "different organization 12345" )
     public void testShouldNotSaveUserIfSessionUserHasDifferentOrganization() {
         final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
         final User user = new User();
