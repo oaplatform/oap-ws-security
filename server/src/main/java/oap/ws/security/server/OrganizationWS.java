@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
 import oap.ws.security.client.WsSecurity;
+import oap.ws.security.domain.Converters;
 import oap.ws.security.domain.Organization;
 import oap.ws.security.domain.Role;
 import oap.ws.security.domain.User;
@@ -58,8 +59,15 @@ public class OrganizationWS {
 
     @WsMethod( method = GET, path = "/{oid}" )
     @WsSecurity( role = Role.USER )
-    public Optional<Organization> getOrganization( @WsParam( from = PATH ) String oid ) {
-        return organizationStorage.get( oid );
+    public Optional<Organization> getOrganization( @WsParam( from = PATH ) String oid,
+                                                   @WsParam( from = SESSION ) User user ) {
+        if( user.role.equals( Role.ADMIN ) || user.organizationId.equals( oid ) ) {
+            return organizationStorage.get( oid );
+        } else {
+            log.warn( "User " + user.email + " has no access to requested organization " + oid );
+            throw new IllegalStateException( "User " + user.email + " has no access to requested " +
+                "organization " + oid );
+        }
     }
 
     @WsMethod( method = DELETE, path = "/remove/{oid}" )
@@ -117,7 +125,7 @@ public class OrganizationWS {
     }
 
     @WsMethod( method = GET, path = "/{oid}/user/{email}" )
-    @WsSecurity( role = Role.ORGANIZATION_ADMIN )
+    @WsSecurity( role = Role.USER )
     public Optional<User> getUser( @WsParam( from = PATH ) String oid,
                                    @WsParam( from = PATH ) String email ) {
         if( organizationStorage.get( oid ).isPresent() ) {
@@ -125,7 +133,8 @@ public class OrganizationWS {
             if( userOptional.isPresent() ) {
                 final User user = userOptional.get();
 
-                return user.organizationId.equals( oid ) ? Optional.of( user ) : Optional.empty();
+                return user.role.equals( Role.ADMIN ) || user.organizationId.equals( oid ) ?
+                    Optional.of( Converters.toUserDTO( user ) ) : Optional.empty();
             } else {
                 log.debug( "User " + email + " doesn't exist" );
                 return Optional.empty();
@@ -139,9 +148,17 @@ public class OrganizationWS {
     @WsMethod( method = DELETE, path = "/{oid}/remove-user/{email}" )
     @WsSecurity( role = Role.ORGANIZATION_ADMIN )
     public void removeUser( @WsParam( from = PATH ) String oid,
-                            @WsParam( from = PATH ) String email ) {
+                            @WsParam( from = PATH ) String email,
+                            @WsParam( from = SESSION ) User user ) {
         if( organizationStorage.get( oid ).isPresent() ) {
-            userStorage.delete( email );
+            if( user.role.equals( Role.ADMIN ) || user.organizationId.equals( oid ) ) {
+                userStorage.delete( email );
+            } else {
+                log.warn( "User " + email + "cannot perform deletion on " +
+                    "foreign organization" );
+                throw new IllegalStateException( "User " + email + "cannot perform deletion on " +
+                    "foreign organization" );
+            }
         } else {
             log.warn( "Organization " + oid + "doesn't exist" );
             throw new IllegalStateException( "Organization " + oid + "doesn't exist" );
