@@ -24,9 +24,9 @@
 
 package oap.ws.security.domain;
 
-public final class DomainUtils {
+public final class Converters {
 
-    private DomainUtils() {
+    private Converters() {
     }
 
     public static User toUserDTO( User user ) {

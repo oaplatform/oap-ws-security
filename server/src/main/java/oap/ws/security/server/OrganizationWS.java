@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
 import oap.ws.security.client.WsSecurity;
-import oap.ws.security.domain.DomainUtils;
+import oap.ws.security.domain.Converters;
 import oap.ws.security.domain.Organization;
 import oap.ws.security.domain.Role;
 import oap.ws.security.domain.User;
@@ -134,7 +134,7 @@ public class OrganizationWS {
                 final User user = userOptional.get();
 
                 return user.role.equals( Role.ADMIN ) || user.organizationId.equals( oid ) ?
-                    Optional.of( DomainUtils.toUserDTO( user ) ) : Optional.empty();
+                    Optional.of( Converters.toUserDTO( user ) ) : Optional.empty();
             } else {
                 log.debug( "User " + email + " doesn't exist" );
                 return Optional.empty();

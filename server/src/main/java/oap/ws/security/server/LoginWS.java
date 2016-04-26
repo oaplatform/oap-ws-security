@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import oap.http.HttpResponse;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
-import oap.ws.security.domain.DomainUtils;
+import oap.ws.security.domain.Converters;
 import oap.ws.security.domain.Token;
 import oap.ws.security.domain.User;
 import org.joda.time.DateTime;
@@ -67,7 +67,7 @@ public class LoginWS {
 
             if( optionalToken.isPresent() ) {
                 final Token token = optionalToken.get();
-                return HttpResponse.ok( DomainUtils.toTokenDTO( token ) ).withHeader( "Authorization", token.id )
+                return HttpResponse.ok( Converters.toTokenDTO( token ) ).withHeader( "Authorization", token.id )
                     .withCookie( new HttpResponse.CookieBuilder()
                         .withCustomValue( "Authorization", token.id )
                         .withDomain( cookieDomain )
