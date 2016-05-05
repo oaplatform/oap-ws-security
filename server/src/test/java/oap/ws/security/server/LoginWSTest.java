@@ -90,7 +90,7 @@ public class LoginWSTest {
 
     @Test
     public void testShouldNotLoginNonExistingUser() {
-        assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" ).hasCode( 409 ).hasBody( "" );
+        assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" ).hasCode( 422 ).hasBody( "" );
     }
 
     @Test
