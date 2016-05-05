@@ -55,6 +55,7 @@ public class OrganizationWS {
     @WsMethod( method = POST, path = "/store" )
     @WsSecurity( role = Role.ADMIN )
     public void store( @WsParam( from = BODY ) Organization organization ) {
+        log.debug( "Storing organization: [{}]", organization );
         organizationStorage.store( organization );
     }
 
@@ -89,6 +90,8 @@ public class OrganizationWS {
     @WsSecurity( role = Role.ADMIN )
     public void removeOrganization( @WsParam( from = PATH ) String oid ) {
         organizationStorage.delete( oid );
+
+        log.debug( "Organization [{}] deleted", oid );
     }
 
     @WsMethod( method = POST, path = "/{oid}/store-user" )
@@ -203,6 +206,8 @@ public class OrganizationWS {
         if( organizationStorage.get( oid ).isPresent() ) {
             if( user.role.equals( Role.ADMIN ) || user.organizationId.equals( oid ) ) {
                 userStorage.delete( email );
+
+                log.debug( "User [{}] deleted", email );
 
                 return HttpResponse.NO_CONTENT;
             } else {
