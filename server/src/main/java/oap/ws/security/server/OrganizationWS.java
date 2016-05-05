@@ -67,15 +67,19 @@ public class OrganizationWS {
             if( organizationOptional.isPresent() ) {
                 return HttpResponse.ok( organizationOptional.get() );
             } else {
-                log.debug( "Organization " + oid + " not found" );
-                return HttpResponse.NOT_FOUND;
+                final HttpResponse httpResponse = HttpResponse.status( 404 );
+                httpResponse.reasonPhrase = "Organization " + oid + " not found";
+
+                log.warn( httpResponse.toString() );
+
+                return httpResponse;
             }
         } else {
-            log.warn( "User " + user.email + " has no access to requested organization " + oid );
-
             final HttpResponse httpResponse = HttpResponse.status( 403 );
             httpResponse.reasonPhrase = "User " + user.email + " has no access to requested " +
                 "organization " + oid;
+
+            log.warn( httpResponse.toString() );
 
             return httpResponse;
         }
@@ -91,71 +95,72 @@ public class OrganizationWS {
     @WsSecurity( role = Role.USER )
     public HttpResponse storeUser( @WsParam( from = BODY ) User newUser, @WsParam( from = PATH ) String oid,
                                    @WsParam( from = SESSION ) User user ) {
-        if( organizationStorage.get( oid ).isPresent() ) {
-            if( newUser.organizationId.equals( oid ) ) {
-                final Optional<User> userOptional = userStorage.get( newUser.email );
-                if( userOptional.isPresent() && !userOptional.get().organizationId.equals( oid ) ) {
-                    log.warn( "User " + newUser.email + " is already present in another " +
-                        "organization" );
 
-                    final HttpResponse httpResponse = HttpResponse.status( 409 );
-                    httpResponse.reasonPhrase = "User " + newUser.email + " is already present in another " +
-                        "organization";
-
-                    return httpResponse;
-                }
-
-                if( user.role.equals( Role.ADMIN ) ) {
-                    newUser.password = HashUtils.hash( salt, newUser.password );
-                    userStorage.store( newUser );
-
-                    return HttpResponse.NO_CONTENT;
-                } else {
-                    if( newUser.role.precedence < user.role.precedence ) {
-                        log.warn( "User with role " + user.role + " can't grant role " +
-                            newUser.role + " to user " + newUser.email );
-
-                        final HttpResponse httpResponse = HttpResponse.status( 403 );
-                        httpResponse.reasonPhrase = "User with role " + user.role + " can't grant role " +
-                            newUser.role + " to user " + newUser.email;
-
-                        return httpResponse;
-                    }
-
-                    if( !user.organizationId.equals( newUser.organizationId ) ) {
-                        log.warn( "User " + user.email + " cannot operate on users from " +
-                            "different organization " + oid );
-
-                        final HttpResponse httpResponse = HttpResponse.status( 403 );
-                        httpResponse.reasonPhrase = "User " + user.email + " cannot operate on users from " +
-                            "different organization " + oid;
-
-                        return httpResponse;
-                    }
-
-                    newUser.password = HashUtils.hash( salt, newUser.password );
-                    userStorage.store( newUser );
-
-                    return HttpResponse.NO_CONTENT;
-                }
-            } else {
-                log.warn( "Cannot save user " + newUser.email + " with organization " +
-                    newUser.organizationId + " to organization " + oid );
-
-                final HttpResponse httpResponse = HttpResponse.status( 409 );
-                httpResponse.reasonPhrase = "Cannot save user " + newUser.email + " with organization " +
-                    newUser.organizationId + " to organization " + oid;
-
-                return httpResponse;
-            }
-        } else {
-            log.warn( "Organization " + oid + " doesn't exists" );
-
+        if( !organizationStorage.get( oid ).isPresent() ) {
             final HttpResponse httpResponse = HttpResponse.status( 404 );
             httpResponse.reasonPhrase = "Organization " + oid + " doesn't exists";
 
+            log.warn( httpResponse.toString() );
+
             return httpResponse;
         }
+
+        if( !newUser.organizationId.equals( oid ) ) {
+            final HttpResponse httpResponse = HttpResponse.status( 409 );
+            httpResponse.reasonPhrase = "Cannot save user " + newUser.email + " with organization " +
+                newUser.organizationId + " to organization " + oid;
+
+            log.warn( httpResponse.toString() );
+
+            return httpResponse;
+        }
+
+        final Optional<User> userOptional = userStorage.get( newUser.email );
+        if( userOptional.isPresent() && !userOptional.get().organizationId.equals( oid ) ) {
+            final HttpResponse httpResponse = HttpResponse.status( 409 );
+            httpResponse.reasonPhrase = "User " + newUser.email + " is already present in another " +
+                "organization";
+
+            log.warn( httpResponse.toString() );
+
+            return httpResponse;
+        }
+
+        if( !user.role.equals( Role.ADMIN ) && newUser.role.precedence < user.role.precedence ) {
+            final HttpResponse httpResponse = HttpResponse.status( 403 );
+            httpResponse.reasonPhrase = "User with role " + user.role + " can't grant role " +
+                newUser.role + " to user " + newUser.email;
+
+            log.warn( httpResponse.toString() );
+
+            return httpResponse;
+        }
+
+        if( !user.role.equals( Role.ADMIN ) && !user.organizationId.equals( newUser.organizationId ) ) {
+            final HttpResponse httpResponse = HttpResponse.status( 403 );
+            httpResponse.reasonPhrase = "User " + user.email + " cannot operate on users from " +
+                "different organization " + oid;
+
+            log.warn( httpResponse.toString() );
+
+            return httpResponse;
+        }
+
+        if( user.role.equals( Role.USER ) && !user.email.equals( newUser.email ) ) {
+            final HttpResponse httpResponse = HttpResponse.status( 403 );
+            httpResponse.reasonPhrase = "User " + user.email + " doesn't have rights to create new users";
+
+            log.warn( httpResponse.toString() );
+
+            return httpResponse;
+        }
+
+        newUser.password = HashUtils.hash( salt, newUser.password );
+        userStorage.store( newUser );
+
+        log.debug( "New information about user " + newUser.email + " was successfully added" );
+
+        return HttpResponse.NO_CONTENT;
     }
 
     @WsMethod( method = GET, path = "/user/{email}" )
@@ -167,18 +172,25 @@ public class OrganizationWS {
             final User fetchedUser = userOptional.get();
 
             if( user.role.equals( Role.ADMIN ) || fetchedUser.organizationId.equals( user.organizationId ) ) {
-                return HttpResponse.ok( Converters.toUserDTO( user ) );
+                final HttpResponse httpResponse = HttpResponse.ok( Converters.toUserDTO( user ) );
+                log.debug( httpResponse.toString() );
+
+                return httpResponse;
             } else {
-                log.debug( "User " + user.email + " cannot view users from different organization" );
                 final HttpResponse httpResponse = HttpResponse.status( 403 );
                 httpResponse.reasonPhrase = "User " + user.email + " cannot view users from different organization";
+
+                log.debug( httpResponse.toString() );
 
                 return httpResponse;
             }
         } else {
-            log.debug( "User " + email + " doesn't exist" );
+            final HttpResponse httpResponse = HttpResponse.status( 404 );
+            httpResponse.reasonPhrase = "User " + email + " not found";
 
-            return HttpResponse.NOT_FOUND;
+            log.warn( httpResponse.toString() );
+
+            return httpResponse;
         }
 
     }
@@ -194,20 +206,20 @@ public class OrganizationWS {
 
                 return HttpResponse.NO_CONTENT;
             } else {
-                log.warn( "User " + email + "cannot perform deletion on " +
-                    "foreign organization" );
 
                 final HttpResponse httpResponse = HttpResponse.status( 403 );
                 httpResponse.reasonPhrase = "User " + email + "cannot perform deletion on " +
                     "foreign organization";
 
+                log.warn( httpResponse.toString() );
                 return httpResponse;
             }
         } else {
-            log.warn( "Organization " + oid + "doesn't exist" );
             final HttpResponse httpResponse = HttpResponse.status( 404 );
             httpResponse.reasonPhrase = "User " + email + "cannot perform deletion on " +
                 "foreign organization";
+
+            log.warn( httpResponse.toString() );
 
             return httpResponse;
         }

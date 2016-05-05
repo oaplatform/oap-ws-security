@@ -24,11 +24,14 @@
 
 package oap.ws.security.server;
 
+import oap.io.Resources;
+import oap.json.TypeIdFactory;
 import oap.testng.AbstractTest;
 import oap.ws.security.domain.Role;
 import oap.ws.security.domain.Token;
 import oap.ws.security.domain.User;
 import oap.ws.security.server.AuthService;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -41,10 +44,21 @@ import static org.testng.Assert.assertNotNull;
 public class AuthServiceTest extends AbstractTest {
 
     private AuthService authService;
+    private UserStorage userStorage;
 
     @BeforeTest
     public void setUp() {
-        authService = new AuthService( 1, "test" );
+        TypeIdFactory.register( User.class, User.class.getName() );
+
+        userStorage = new UserStorage( Resources.filePath( LoginWSTest.class, "" ).get() );
+        authService = new AuthService( userStorage, 1, "test" );
+
+        userStorage.start();
+    }
+
+    @AfterTest
+    public void tearDown() {
+        userStorage.clear();
     }
 
     @Test
@@ -54,7 +68,9 @@ public class AuthServiceTest extends AbstractTest {
         user.password = HashUtils.hash( "test", "12345" );
         user.role = Role.ADMIN;
 
-        final Token token = authService.generateToken( user, "12345" ).get();
+        userStorage.store( user );
+
+        final Token token = authService.generateToken( user.email, "12345" ).get();
 
         assertEquals( token.user.role, Role.ADMIN );
         assertEquals( token.user.email, "test@example.com" );
@@ -69,9 +85,11 @@ public class AuthServiceTest extends AbstractTest {
         user.password = HashUtils.hash( "test", "12345" );
         user.role = Role.ADMIN;
 
-        authService = new AuthService( 0, "test" );
+        userStorage.store( user );
 
-        final String id = authService.generateToken( user, "12345" ).get().id;
+        authService = new AuthService( userStorage, 0, "test" );
+
+        final String id = authService.generateToken( user.email, "12345" ).get().id;
         assertNotNull( id );
 
         Thread.sleep( 100 );

@@ -43,14 +43,11 @@ import static oap.ws.WsParam.From.QUERY;
 @Slf4j
 public class LoginWS {
 
-    private final UserStorage userStorage;
     private final AuthService authService;
     private final String cookieDomain;
     private final DateTime cookieExpiration;
 
-    public LoginWS( UserStorage userStorage, AuthService authService,
-                    String cookieDomain, int cookieExpiration ) {
-        this.userStorage = userStorage;
+    public LoginWS( AuthService authService, String cookieDomain, int cookieExpiration ) {
         this.authService = authService;
         this.cookieDomain = cookieDomain;
         this.cookieExpiration = DateTime.now().plusMinutes( cookieExpiration );
@@ -58,38 +55,26 @@ public class LoginWS {
 
     @WsMethod( method = GET, path = "/" )
     public HttpResponse login( @WsParam( from = QUERY ) String email, @WsParam( from = QUERY ) String password ) {
+        final Optional<Token> optionalToken = authService.generateToken( email, password );
 
-        final Optional<User> userOptional = userStorage.get( email );
-        if( userOptional.isPresent() ) {
-            final User user = userOptional.get();
-
-            final Optional<Token> optionalToken = authService.generateToken( user, password );
-
-            if( optionalToken.isPresent() ) {
-                final Token token = optionalToken.get();
-                return HttpResponse.ok( Converters.toTokenDTO( token ) ).withHeader( "Authorization", token.id )
-                    .withCookie( new HttpResponse.CookieBuilder()
-                        .withCustomValue( "Authorization", token.id )
-                        .withDomain( cookieDomain )
-                        .withExpires( cookieExpiration )
-                        .build()
-                    );
-            } else {
-                log.error( "Username or password is invalid" );
-
-                final HttpResponse httpResponse = HttpResponse.status( 401 );
-                httpResponse.reasonPhrase = "Username or password is invalid";
-
-                return httpResponse;
-            }
+        if( optionalToken.isPresent() ) {
+            final Token token = optionalToken.get();
+            return HttpResponse.ok( Converters.toTokenDTO( token ) ).withHeader( "Authorization", token.id )
+                .withCookie( new HttpResponse.CookieBuilder()
+                    .withCustomValue( "Authorization", token.id )
+                    .withDomain( cookieDomain )
+                    .withExpires( cookieExpiration )
+                    .build()
+                );
         } else {
-            log.debug( "User " + email + " is unknown" );
+            final HttpResponse httpResponse = HttpResponse.status( 400 );
+            httpResponse.reasonPhrase = "Username or password is invalid";
 
-            final HttpResponse httpResponse = HttpResponse.status( 422 );
-            httpResponse.reasonPhrase = "User " + email + " is unknown";
+            log.debug( httpResponse.reasonPhrase );
 
             return httpResponse;
         }
+
     }
 
     @WsMethod( method = DELETE, path = "/{tokenId}" )
