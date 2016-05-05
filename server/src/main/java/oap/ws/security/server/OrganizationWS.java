@@ -93,7 +93,7 @@ public class OrganizationWS {
 
     @WsMethod( method = POST, path = "/{oid}/store-user" )
     @WsSecurity( role = Role.USER )
-    public HttpResponse storeUser( @WsParam( from = BODY ) User newUser, @WsParam( from = PATH ) String oid,
+    public HttpResponse storeUser( @WsParam( from = BODY ) User storeUser, @WsParam( from = PATH ) String oid,
                                    @WsParam( from = SESSION ) User user ) {
 
         if( !organizationStorage.get( oid ).isPresent() ) {
@@ -105,20 +105,20 @@ public class OrganizationWS {
             return httpResponse;
         }
 
-        if( !newUser.organizationId.equals( oid ) ) {
+        if( !storeUser.organizationId.equals( oid ) ) {
             final HttpResponse httpResponse = HttpResponse.status( 409 );
-            httpResponse.reasonPhrase = "Cannot save user " + newUser.email + " with organization " +
-                newUser.organizationId + " to organization " + oid;
+            httpResponse.reasonPhrase = "Cannot save user " + storeUser.email + " with organization " +
+                storeUser.organizationId + " to organization " + oid;
 
             log.warn( httpResponse.toString() );
 
             return httpResponse;
         }
 
-        final Optional<User> userOptional = userStorage.get( newUser.email );
-        if( userOptional.isPresent() && !userOptional.get().organizationId.equals( oid ) ) {
+        final Optional<User> existingUser = userStorage.get( storeUser.email );
+        if( existingUser.isPresent() && !existingUser.get().organizationId.equals( oid ) ) {
             final HttpResponse httpResponse = HttpResponse.status( 409 );
-            httpResponse.reasonPhrase = "User " + newUser.email + " is already present in another " +
+            httpResponse.reasonPhrase = "User " + storeUser.email + " is already present in another " +
                 "organization";
 
             log.warn( httpResponse.toString() );
@@ -126,17 +126,17 @@ public class OrganizationWS {
             return httpResponse;
         }
 
-        if( !user.role.equals( Role.ADMIN ) && newUser.role.precedence < user.role.precedence ) {
+        if( !user.role.equals( Role.ADMIN ) && storeUser.role.precedence < user.role.precedence ) {
             final HttpResponse httpResponse = HttpResponse.status( 403 );
             httpResponse.reasonPhrase = "User with role " + user.role + " can't grant role " +
-                newUser.role + " to user " + newUser.email;
+                storeUser.role + " to user " + storeUser.email;
 
             log.warn( httpResponse.toString() );
 
             return httpResponse;
         }
 
-        if( !user.role.equals( Role.ADMIN ) && !user.organizationId.equals( newUser.organizationId ) ) {
+        if( !user.role.equals( Role.ADMIN ) && !user.organizationId.equals( storeUser.organizationId ) ) {
             final HttpResponse httpResponse = HttpResponse.status( 403 );
             httpResponse.reasonPhrase = "User " + user.email + " cannot operate on users from " +
                 "different organization " + oid;
@@ -146,7 +146,7 @@ public class OrganizationWS {
             return httpResponse;
         }
 
-        if( user.role.equals( Role.USER ) && !user.email.equals( newUser.email ) ) {
+        if( user.role.equals( Role.USER ) && !user.email.equals( storeUser.email ) ) {
             final HttpResponse httpResponse = HttpResponse.status( 403 );
             httpResponse.reasonPhrase = "User " + user.email + " doesn't have rights to create new users";
 
@@ -155,10 +155,10 @@ public class OrganizationWS {
             return httpResponse;
         }
 
-        newUser.password = HashUtils.hash( salt, newUser.password );
-        userStorage.store( newUser );
+        storeUser.password = HashUtils.hash( salt, storeUser.password );
+        userStorage.store( storeUser );
 
-        log.debug( "New information about user " + newUser.email + " was successfully added" );
+        log.debug( "New information about user " + storeUser.email + " was successfully added" );
 
         return HttpResponse.NO_CONTENT;
     }
