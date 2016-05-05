@@ -81,6 +81,7 @@ public class AuthService {
                 return Optional.of( existingToken );
             }
         }
+
         return Optional.empty();
     }
 

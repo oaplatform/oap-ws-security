@@ -75,17 +75,17 @@ public class LoginWS {
                         .build()
                     );
             } else {
-                log.error( "Cannot generate token for user " + email );
+                log.error( "Username or password is invalid" );
 
-                final HttpResponse httpResponse = HttpResponse.status( 500 );
-                httpResponse.reasonPhrase = "Cannot generate token for user " + email;
+                final HttpResponse httpResponse = HttpResponse.status( 401 );
+                httpResponse.reasonPhrase = "Username or password is invalid";
 
                 return httpResponse;
             }
         } else {
             log.debug( "User " + email + " is unknown" );
 
-            final HttpResponse httpResponse = HttpResponse.status( 500 );
+            final HttpResponse httpResponse = HttpResponse.status( 422 );
             httpResponse.reasonPhrase = "User " + email + " is unknown";
 
             return httpResponse;

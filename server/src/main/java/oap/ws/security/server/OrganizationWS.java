@@ -25,6 +25,7 @@
 package oap.ws.security.server;
 
 import lombok.extern.slf4j.Slf4j;
+import oap.http.HttpResponse;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
 import oap.ws.security.client.WsSecurity;
@@ -59,14 +60,24 @@ public class OrganizationWS {
 
     @WsMethod( method = GET, path = "/{oid}" )
     @WsSecurity( role = Role.USER )
-    public Optional<Organization> getOrganization( @WsParam( from = PATH ) String oid,
-                                                   @WsParam( from = SESSION ) User user ) {
+    public HttpResponse getOrganization( @WsParam( from = PATH ) String oid,
+                                         @WsParam( from = SESSION ) User user ) {
         if( user.role.equals( Role.ADMIN ) || user.organizationId.equals( oid ) ) {
-            return organizationStorage.get( oid );
+            final Optional<Organization> organizationOptional = organizationStorage.get( oid );
+            if( organizationOptional.isPresent() ) {
+                return HttpResponse.ok( organizationOptional.get() );
+            } else {
+                log.debug( "Organization " + oid + " not found" );
+                return HttpResponse.NOT_FOUND;
+            }
         } else {
             log.warn( "User " + user.email + " has no access to requested organization " + oid );
-            throw new IllegalStateException( "User " + user.email + " has no access to requested " +
-                "organization " + oid );
+
+            final HttpResponse httpResponse = HttpResponse.status( 403 );
+            httpResponse.reasonPhrase = "User " + user.email + " has no access to requested " +
+                "organization " + oid;
+
+            return httpResponse;
         }
     }
 
@@ -78,90 +89,127 @@ public class OrganizationWS {
 
     @WsMethod( method = POST, path = "/{oid}/store-user" )
     @WsSecurity( role = Role.USER )
-    public void storeUser( @WsParam( from = BODY ) User user, @WsParam( from = PATH ) String oid,
-                           @WsParam( from = SESSION ) User userSession ) {
-
+    public HttpResponse storeUser( @WsParam( from = BODY ) User newUser, @WsParam( from = PATH ) String oid,
+                                   @WsParam( from = SESSION ) User user ) {
         if( organizationStorage.get( oid ).isPresent() ) {
-            if( user.organizationId.equals( oid ) ) {
-                final Optional<User> userOptional = userStorage.get( user.email );
+            if( newUser.organizationId.equals( oid ) ) {
+                final Optional<User> userOptional = userStorage.get( newUser.email );
                 if( userOptional.isPresent() && !userOptional.get().organizationId.equals( oid ) ) {
-                    log.warn( "User " + user.email + " is already present in another " +
+                    log.warn( "User " + newUser.email + " is already present in another " +
                         "organization" );
-                    throw new IllegalStateException( "User " + user.email + " is already present in another " +
-                        "organization" );
+
+                    final HttpResponse httpResponse = HttpResponse.status( 409 );
+                    httpResponse.reasonPhrase = "User " + newUser.email + " is already present in another " +
+                        "organization";
+
+                    return httpResponse;
                 }
 
-                if( userSession.role.equals( Role.ADMIN ) ) {
-                    user.password = HashUtils.hash( salt, user.password );
-                    userStorage.store( user );
+                if( user.role.equals( Role.ADMIN ) ) {
+                    newUser.password = HashUtils.hash( salt, newUser.password );
+                    userStorage.store( newUser );
+
+                    return HttpResponse.NO_CONTENT;
                 } else {
-                    if( user.role.precedence < userSession.role.precedence ) {
-                        log.warn( "User with role " + userSession.role + " can't grant role " +
-                            user.role + " to user " + user.email );
-                        throw new IllegalStateException( "User with role " + userSession.role + " can't grant role " +
-                            user.role + " to user " + user.email );
+                    if( newUser.role.precedence < user.role.precedence ) {
+                        log.warn( "User with role " + user.role + " can't grant role " +
+                            newUser.role + " to user " + newUser.email );
+
+                        final HttpResponse httpResponse = HttpResponse.status( 403 );
+                        httpResponse.reasonPhrase = "User with role " + user.role + " can't grant role " +
+                            newUser.role + " to user " + newUser.email;
+
+                        return httpResponse;
                     }
 
-                    if( !userSession.organizationId.equals( user.organizationId ) ) {
-                        log.warn( "User " + userSession.email + " cannot operate on users from " +
+                    if( !user.organizationId.equals( newUser.organizationId ) ) {
+                        log.warn( "User " + user.email + " cannot operate on users from " +
                             "different organization " + oid );
-                        throw new IllegalStateException( "User " + userSession.email + " cannot operate on users from " +
-                            "different organization " + oid );
+
+                        final HttpResponse httpResponse = HttpResponse.status( 403 );
+                        httpResponse.reasonPhrase = "User " + user.email + " cannot operate on users from " +
+                            "different organization " + oid;
+
+                        return httpResponse;
                     }
 
-                    user.password = HashUtils.hash( salt, user.password );
-                    userStorage.store( user );
+                    newUser.password = HashUtils.hash( salt, newUser.password );
+                    userStorage.store( newUser );
+
+                    return HttpResponse.NO_CONTENT;
                 }
             } else {
-                log.warn( "Cannot save user " + user.email + " with organization " +
-                    user.organizationId + " to organization " + oid );
-                throw new IllegalStateException( "Cannot save user " + user.email + " with organization " +
-                    user.organizationId + " to organization " + oid );
+                log.warn( "Cannot save user " + newUser.email + " with organization " +
+                    newUser.organizationId + " to organization " + oid );
+
+                final HttpResponse httpResponse = HttpResponse.status( 409 );
+                httpResponse.reasonPhrase = "Cannot save user " + newUser.email + " with organization " +
+                    newUser.organizationId + " to organization " + oid;
+
+                return httpResponse;
             }
         } else {
             log.warn( "Organization " + oid + " doesn't exists" );
-            throw new IllegalStateException( "Organization " + oid + " doesn't exists" );
+
+            final HttpResponse httpResponse = HttpResponse.status( 404 );
+            httpResponse.reasonPhrase = "Organization " + oid + " doesn't exists";
+
+            return httpResponse;
         }
     }
 
-    @WsMethod( method = GET, path = "/{oid}/user/{email}" )
+    @WsMethod( method = GET, path = "/user/{email}" )
     @WsSecurity( role = Role.USER )
-    public Optional<User> getUser( @WsParam( from = PATH ) String oid,
-                                   @WsParam( from = PATH ) String email ) {
-        if( organizationStorage.get( oid ).isPresent() ) {
-            final Optional<User> userOptional = userStorage.get( email );
-            if( userOptional.isPresent() ) {
-                final User user = userOptional.get();
+    public HttpResponse getUser( @WsParam( from = PATH ) String email,
+                                 @WsParam( from = SESSION ) User user ) {
+        final Optional<User> userOptional = userStorage.get( email );
+        if( userOptional.isPresent() ) {
+            final User fetchedUser = userOptional.get();
 
-                return user.role.equals( Role.ADMIN ) || user.organizationId.equals( oid ) ?
-                    Optional.of( Converters.toUserDTO( user ) ) : Optional.empty();
+            if( user.role.equals( Role.ADMIN ) || fetchedUser.organizationId.equals( user.organizationId ) ) {
+                return HttpResponse.ok( Converters.toUserDTO( user ) );
             } else {
-                log.debug( "User " + email + " doesn't exist" );
-                return Optional.empty();
+                log.debug( "User " + user.email + " cannot view users from different organization" );
+                final HttpResponse httpResponse = HttpResponse.status( 403 );
+                httpResponse.reasonPhrase = "User " + user.email + " cannot view users from different organization";
+
+                return httpResponse;
             }
         } else {
-            log.warn( "Organization " + oid + "doesn't exist" );
-            throw new IllegalStateException( "Organization " + oid + "doesn't exist" );
+            log.debug( "User " + email + " doesn't exist" );
+
+            return HttpResponse.NOT_FOUND;
         }
+
     }
 
     @WsMethod( method = DELETE, path = "/{oid}/remove-user/{email}" )
     @WsSecurity( role = Role.ORGANIZATION_ADMIN )
-    public void removeUser( @WsParam( from = PATH ) String oid,
-                            @WsParam( from = PATH ) String email,
-                            @WsParam( from = SESSION ) User user ) {
+    public HttpResponse removeUser( @WsParam( from = PATH ) String oid,
+                                    @WsParam( from = PATH ) String email,
+                                    @WsParam( from = SESSION ) User user ) {
         if( organizationStorage.get( oid ).isPresent() ) {
             if( user.role.equals( Role.ADMIN ) || user.organizationId.equals( oid ) ) {
                 userStorage.delete( email );
+
+                return HttpResponse.NO_CONTENT;
             } else {
                 log.warn( "User " + email + "cannot perform deletion on " +
                     "foreign organization" );
-                throw new IllegalStateException( "User " + email + "cannot perform deletion on " +
-                    "foreign organization" );
+
+                final HttpResponse httpResponse = HttpResponse.status( 403 );
+                httpResponse.reasonPhrase = "User " + email + "cannot perform deletion on " +
+                    "foreign organization";
+
+                return httpResponse;
             }
         } else {
             log.warn( "Organization " + oid + "doesn't exist" );
-            throw new IllegalStateException( "Organization " + oid + "doesn't exist" );
+            final HttpResponse httpResponse = HttpResponse.status( 404 );
+            httpResponse.reasonPhrase = "User " + email + "cannot perform deletion on " +
+                "foreign organization";
+
+            return httpResponse;
         }
     }
 }
