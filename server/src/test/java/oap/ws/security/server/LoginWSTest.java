@@ -64,11 +64,11 @@ public class LoginWSTest {
         TypeIdFactory.register( User.class, User.class.getName() );
 
         userStorage = new UserStorage( Resources.filePath( LoginWSTest.class, "" ).get() );
-        authService = new AuthService( 1, "test" );
+        authService = new AuthService( userStorage, 1, "test" );
 
         userStorage.start();
 
-        Application.register( "ws-login", new LoginWS( userStorage, authService, null, 10 ) );
+        Application.register( "ws-login", new LoginWS( authService, null, 10 ) );
 
         webServices.start();
         listener = new SynchronizedThread( new PlainHttpListener( server, Env.port() ) );
@@ -90,7 +90,7 @@ public class LoginWSTest {
 
     @Test
     public void testShouldNotLoginNonExistingUser() {
-        assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" ).hasCode( 500 ).hasBody( "" );
+        assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" ).hasCode( 400 ).hasBody( "" );
     }
 
     @Test
@@ -118,7 +118,9 @@ public class LoginWSTest {
         user.organizationId = "987654321";
         user.organizationName = "test";
 
-        final String id = authService.generateToken( user, "12345" ).get().id;
+        userStorage.store( user );
+
+        final String id = authService.generateToken( user.email, "12345" ).get().id;
 
         assertNotNull( id );
         assertDelete( HTTP_PREFIX + "/login/" + id ).hasCode( 204 );

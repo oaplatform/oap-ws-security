@@ -42,45 +42,54 @@ import java.util.concurrent.TimeUnit;
 public class AuthService {
 
     private final Cache<String, Token> tokenStorage;
+    private final UserStorage userStorage;
     private final String salt;
 
-    public AuthService( int expirationTime, String salt ) {
+    public AuthService( UserStorage userStorage, int expirationTime, String salt ) {
         this.tokenStorage = CacheBuilder.newBuilder()
             .expireAfterAccess( expirationTime, TimeUnit.MINUTES )
             .build();
+        this.userStorage = userStorage;
         this.salt = salt;
     }
 
-    public Optional<Token> generateToken( User user, String password ) {
-        final String inputPassword = HashUtils.hash( salt, password );
-        if( user.password.equals( inputPassword ) ) {
-            final List<Token> tokens = new ArrayList<>();
+    public Optional<Token> generateToken( String email, String password ) {
+        final Optional<User> userOptional = userStorage.get( email );
 
-            tokenStorage.asMap().forEach( ( s, token ) -> {
-                if( token.user.email.equals( user.email ) ) {
-                    tokens.add( token );
+        if( userOptional.isPresent() ) {
+            final User user = userOptional.get();
+
+            final String inputPassword = HashUtils.hash( salt, password );
+            if( user.password.equals( inputPassword ) ) {
+                final List<Token> tokens = new ArrayList<>();
+
+                tokenStorage.asMap().forEach( ( s, token ) -> {
+                    if( token.user.email.equals( user.email ) ) {
+                        tokens.add( token );
+                    }
+                } );
+
+                if( tokens.isEmpty() ) {
+                    log.debug( "Generating new token for user [{}]...", user.email );
+                    final Token token = new Token();
+                    token.user = user;
+                    token.created = DateTime.now();
+                    token.id = UUID.randomUUID().toString();
+
+                    tokenStorage.put( token.id, token );
+
+                    return Optional.of( token );
+                } else {
+                    final Token existingToken = Iterables.getOnlyElement( tokens );
+
+                    log.debug( "Updating existing token for user [{}]...", user.email );
+                    tokenStorage.put( existingToken.id, existingToken );
+
+                    return Optional.of( existingToken );
                 }
-            } );
-
-            if( tokens.isEmpty() ) {
-                log.debug( "Generating new token for user [{}]...", user.email );
-                final Token token = new Token();
-                token.user = user;
-                token.created = DateTime.now();
-                token.id = UUID.randomUUID().toString();
-
-                tokenStorage.put( token.id, token );
-
-                return Optional.of( token );
-            } else {
-                final Token existingToken = Iterables.getOnlyElement( tokens );
-
-                log.debug( "Updating existing token for user [{}]...", user.email );
-                tokenStorage.put( existingToken.id, existingToken );
-
-                return Optional.of( existingToken );
             }
         }
+
         return Optional.empty();
     }
 

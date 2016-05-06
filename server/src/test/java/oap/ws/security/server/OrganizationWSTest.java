@@ -26,10 +26,11 @@ package oap.ws.security.server;
 
 import oap.application.Application;
 import oap.concurrent.SynchronizedThread;
+import oap.http.HttpResponse;
 import oap.http.PlainHttpListener;
 import oap.http.Server;
 import oap.io.Resources;
-import oap.json.TypeIdFactory;
+import oap.json.Binder;
 import oap.testng.Env;
 import oap.ws.SessionManager;
 import oap.ws.WebServices;
@@ -38,17 +39,16 @@ import oap.ws.security.domain.Organization;
 import oap.ws.security.domain.Role;
 import oap.ws.security.domain.User;
 import org.apache.http.entity.ContentType;
+import org.apache.http.util.EntityUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Optional;
+import java.io.IOException;
 
 import static oap.http.testng.HttpAsserts.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.*;
 
 public class OrganizationWSTest {
 
@@ -91,7 +91,7 @@ public class OrganizationWSTest {
     }
 
     @Test
-    public void testShouldStoreGetDeleteOrganization() {
+    public void testShouldStoreGetDeleteOrganization() throws IOException {
         final String request = Resources.readString( getClass(), getClass().getSimpleName() + "/"
             + "12345.json" ).get();
 
@@ -103,19 +103,21 @@ public class OrganizationWSTest {
         sessionUser.organizationId = "12345";
         sessionUser.role = Role.USER;
 
-        final Optional<Organization> organization = organizationWS.getOrganization( "12345", sessionUser );
+        final HttpResponse httpResponse = organizationWS.getOrganization( "12345", sessionUser );
 
-        assertEquals( organization.get().id, "12345" );
-        assertEquals( organization.get().name, "test" );
-        assertEquals( organization.get().description, "test organization" );
+        final Organization organization = Binder.json.unmarshal(
+            Organization.class, EntityUtils.toString( httpResponse.contentEntity ) );
+
+        assertEquals( organization.id, "12345" );
+        assertEquals( organization.name, "test" );
+        assertEquals( organization.description, "test organization" );
 
         assertDelete( HTTP_PREFIX + "/organization/remove/12345" ).hasCode( 204 );
 
         assertFalse( organizationStorage.get( "12345" ).isPresent() );
     }
 
-    @Test( expectedExceptions = { IllegalStateException.class },
-        expectedExceptionsMessageRegExp = "Organization 98765 doesn't exists" )
+    @Test
     public void testShouldNotStoreUserIfOrganizationDoesNotExist() {
         final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
         final User user = new User();
@@ -125,12 +127,13 @@ public class OrganizationWSTest {
         user.organizationId = "12345";
         user.organizationName = "test";
 
-        organizationWS.storeUser( user, "98765", new User() );
+        final HttpResponse httpResponse = organizationWS.storeUser( user, "98765", new User() );
+
+        assertEquals( httpResponse.code, 404 );
+        assertEquals( httpResponse.reasonPhrase, "Organization 98765 doesn't exists");
     }
 
-    @Test( expectedExceptions = { IllegalStateException.class },
-        expectedExceptionsMessageRegExp = "Cannot save user test@example.com with organization 12345" +
-            " to organization 98765" )
+    @Test
     public void testShouldNotStoreUserIfOrganizationMismatch() {
         final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
         final User user = new User();
@@ -144,11 +147,14 @@ public class OrganizationWSTest {
         organization.id = "98765";
         organizationStorage.store( organization );
 
-        organizationWS.storeUser( user, "98765", new User() );
+        final HttpResponse httpResponse = organizationWS.storeUser( user, "98765", new User() );
+
+        assertEquals( httpResponse.code, 409 );
+        assertEquals( httpResponse.reasonPhrase, "Cannot save user test@example.com with organization 12345" +
+            " to organization 98765");
     }
 
-    @Test( expectedExceptions = { IllegalStateException.class },
-        expectedExceptionsMessageRegExp = "User test@example.com is already present in another organization" )
+    @Test
     public void testShouldNotStoreUserIfItExistsInAnotherOrganization() {
         final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
         final User user = new User();
@@ -171,7 +177,11 @@ public class OrganizationWSTest {
         final User userUpdate = new User();
         userUpdate.email = "test@example.com";
         userUpdate.organizationId = "98765";
-        organizationWS.storeUser( userUpdate, "98765", new User() );
+
+        final HttpResponse httpResponse = organizationWS.storeUser( userUpdate, "98765", new User() );
+
+        assertEquals( httpResponse.code, 409 );
+        assertEquals( httpResponse.reasonPhrase, "User test@example.com is already present in another organization" );
     }
 
     @Test
@@ -196,9 +206,7 @@ public class OrganizationWSTest {
         assertNotNull( userStorage.get( "test@example.com" ).isPresent() );
     }
 
-    @Test( expectedExceptions = { IllegalStateException.class },
-        expectedExceptionsMessageRegExp = "User with role ORGANIZATION_ADMIN can't grant role ADMIN to user " +
-            "test@example.com" )
+    @Test
     public void testShouldNotSaveUserWithHigherRoleThanSessionUserIfNotAdmin() {
         final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
         final User user = new User();
@@ -215,12 +223,14 @@ public class OrganizationWSTest {
         final User sessionUser = new User();
         sessionUser.role = Role.ORGANIZATION_ADMIN;
 
-        organizationWS.storeUser( user, "12345", sessionUser );
+        final HttpResponse httpResponse = organizationWS.storeUser( user, "12345", sessionUser );
+
+        assertEquals( httpResponse.code, 403 );
+        assertEquals( httpResponse.reasonPhrase, "User with role ORGANIZATION_ADMIN can't grant role ADMIN to user " +
+            "test@example.com" );
     }
 
-    @Test( expectedExceptions = { IllegalStateException.class },
-        expectedExceptionsMessageRegExp = "User org-admin@example.com cannot operate on users from " +
-            "different organization 12345" )
+    @Test
     public void testShouldNotSaveUserIfSessionUserHasDifferentOrganization() {
         final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
         final User user = new User();
@@ -239,7 +249,11 @@ public class OrganizationWSTest {
         sessionUser.organizationId = "98765";
         sessionUser.role = Role.ORGANIZATION_ADMIN;
 
-        organizationWS.storeUser( user, "12345", sessionUser );
+        final HttpResponse httpResponse = organizationWS.storeUser( user, "12345", sessionUser );
+
+        assertEquals( httpResponse.code, 403 );
+        assertEquals( httpResponse.reasonPhrase, "User org-admin@example.com cannot operate on users from " +
+            "different organization 12345" );
     }
 
     @Test
