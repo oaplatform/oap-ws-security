@@ -96,7 +96,7 @@ public class OrganizationWSTest {
             + "12345.json" ).get();
 
         assertPost( HTTP_PREFIX + "/organization/store", request, ContentType.APPLICATION_JSON )
-            .hasCode( 204 );
+            .hasCode( 201 );
         final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
 
         final User sessionUser = new User();

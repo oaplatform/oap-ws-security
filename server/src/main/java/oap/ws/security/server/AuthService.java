@@ -32,10 +32,8 @@ import oap.ws.security.domain.Token;
 import oap.ws.security.domain.User;
 import org.joda.time.DateTime;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -97,8 +95,17 @@ public class AuthService {
         return Optional.ofNullable( tokenStorage.getIfPresent( tokenId ) );
     }
 
-    public void deleteToken( String tokenId ) {
-        log.debug( "Deleting token [{}]...", tokenId );
-        tokenStorage.invalidate( tokenId );
+    public void invalidateUser( String email ) {
+        final ConcurrentMap<String, Token> tokens = tokenStorage.asMap();
+
+        for( Map.Entry<String, Token> entry : tokens.entrySet() ) {
+            if( Objects.equals( entry.getValue().user.email, email ) ) {
+                log.debug( "Deleting token [{}]...", entry.getKey() );
+                tokenStorage.invalidate( entry.getKey() );
+
+                return;
+            }
+        }
     }
+
 }

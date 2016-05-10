@@ -123,7 +123,10 @@ public class LoginWSTest {
         final String id = authService.generateToken( user.email, "12345" ).get().id;
 
         assertNotNull( id );
-        assertDelete( HTTP_PREFIX + "/login/" + id ).hasCode( 204 );
+        final LoginWS loginWS = new LoginWS( authService, "", 1 );
+
+        loginWS.logout( user.email,user );
+
         assertFalse( authService.getToken( id ).isPresent() );
     }
 
