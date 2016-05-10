@@ -28,11 +28,14 @@ import lombok.extern.slf4j.Slf4j;
 import oap.http.HttpResponse;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
+import oap.ws.security.client.WsSecurity;
 import oap.ws.security.domain.Converters;
+import oap.ws.security.domain.Role;
 import oap.ws.security.domain.Token;
 import oap.ws.security.domain.User;
 import org.joda.time.DateTime;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import static oap.http.Request.HttpMethod.DELETE;
@@ -77,9 +80,22 @@ public class LoginWS {
 
     }
 
-    @WsMethod( method = DELETE, path = "/{tokenId}" )
-    public void logout( @WsParam( from = PATH ) String tokenId ) {
-        authService.deleteToken( tokenId );
+    @WsMethod( method = DELETE, path = "/{email}" )
+    @WsSecurity( role = Role.USER )
+    public HttpResponse logout( @WsParam( from = PATH ) String email,
+                                @WsParam( from = PATH ) User user ) {
+        if( !Objects.equals( user.email, email ) ) {
+            final HttpResponse httpResponse = HttpResponse.status( 403, "User " + user.email + " cannot logout " +
+                "another users" );
+
+            log.debug( httpResponse.reasonPhrase );
+
+            return httpResponse;
+        }
+
+        authService.invalidateUser( email );
+
+        return HttpResponse.status( 204, "User " + email + " was successfully logged out" );
     }
 
 }
