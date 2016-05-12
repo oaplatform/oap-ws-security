@@ -48,12 +48,12 @@ public class LoginWS {
 
     private final AuthService authService;
     private final String cookieDomain;
-    private final DateTime cookieExpiration;
+    private final int cookieExpiration;
 
     public LoginWS( AuthService authService, String cookieDomain, int cookieExpiration ) {
         this.authService = authService;
         this.cookieDomain = cookieDomain;
-        this.cookieExpiration = DateTime.now().plusMinutes( cookieExpiration );
+        this.cookieExpiration = cookieExpiration;
     }
 
     @WsMethod( method = GET, path = "/" )
@@ -66,7 +66,7 @@ public class LoginWS {
                 .withCookie( new HttpResponse.CookieBuilder()
                     .withCustomValue( "Authorization", token.id )
                     .withDomain( cookieDomain )
-                    .withExpires( cookieExpiration )
+                    .withExpires( DateTime.now().plusMinutes( cookieExpiration ))
                     .build()
                 );
         } else {
