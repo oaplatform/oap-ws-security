@@ -42,6 +42,7 @@ import static oap.http.Request.HttpMethod.DELETE;
 import static oap.http.Request.HttpMethod.GET;
 import static oap.ws.WsParam.From.PATH;
 import static oap.ws.WsParam.From.QUERY;
+import static oap.ws.WsParam.From.SESSION;
 
 @Slf4j
 public class LoginWS {
@@ -83,7 +84,7 @@ public class LoginWS {
     @WsMethod( method = DELETE, path = "/{email}" )
     @WsSecurity( role = Role.USER )
     public HttpResponse logout( @WsParam( from = PATH ) String email,
-                                @WsParam( from = PATH ) User user ) {
+                                @WsParam( from = SESSION ) User user ) {
         if( !Objects.equals( user.email, email ) ) {
             final HttpResponse httpResponse = HttpResponse.status( 403, "User " + user.email + " cannot logout " +
                 "another users" );
