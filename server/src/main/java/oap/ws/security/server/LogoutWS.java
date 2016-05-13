@@ -12,6 +12,7 @@ import java.util.Objects;
 
 import static oap.http.Request.HttpMethod.DELETE;
 import static oap.ws.WsParam.From.PATH;
+import static oap.ws.WsParam.From.QUERY;
 import static oap.ws.WsParam.From.SESSION;
 
 @Slf4j
@@ -23,9 +24,9 @@ public class LogoutWS {
         this.authService = authService;
     }
 
-    @WsMethod( method = DELETE, path = "/{email}" )
+    @WsMethod( method = DELETE, path = "/" )
     @WsSecurity( role = Role.USER )
-    public HttpResponse logout( @WsParam( from = PATH ) String email,
+    public HttpResponse logout( @WsParam( from = QUERY ) String email,
                                 @WsParam( from = SESSION ) User user ) {
         if( !Objects.equals( user.email, email ) ) {
             final HttpResponse httpResponse = HttpResponse.status( 403, "User " + user.email + " cannot logout " +
