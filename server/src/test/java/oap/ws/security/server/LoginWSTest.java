@@ -109,25 +109,4 @@ public class LoginWSTest {
             .is( response -> response.contentString.get().matches( "id|userEmail|role|expire" ) );
     }
 
-    @Test
-    public void testShouldLogoutExistingUser() {
-        final User user = new User();
-        user.email = "test@example.com";
-        user.role = Role.ADMIN;
-        user.password = HashUtils.hash( SALT, "12345" );
-        user.organizationId = "987654321";
-        user.organizationName = "test";
-
-        userStorage.store( user );
-
-        final String id = authService.generateToken( user.email, "12345" ).get().id;
-
-        assertNotNull( id );
-        final LoginWS loginWS = new LoginWS( authService, "", 1 );
-
-        loginWS.logout( user.email,user );
-
-        assertFalse( authService.getToken( id ).isPresent() );
-    }
-
 }

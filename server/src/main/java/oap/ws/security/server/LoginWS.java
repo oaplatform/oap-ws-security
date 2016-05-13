@@ -28,21 +28,14 @@ import lombok.extern.slf4j.Slf4j;
 import oap.http.HttpResponse;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
-import oap.ws.security.client.WsSecurity;
 import oap.ws.security.domain.Converters;
-import oap.ws.security.domain.Role;
 import oap.ws.security.domain.Token;
-import oap.ws.security.domain.User;
 import org.joda.time.DateTime;
 
-import java.util.Objects;
 import java.util.Optional;
 
-import static oap.http.Request.HttpMethod.DELETE;
 import static oap.http.Request.HttpMethod.GET;
-import static oap.ws.WsParam.From.PATH;
 import static oap.ws.WsParam.From.QUERY;
-import static oap.ws.WsParam.From.SESSION;
 
 @Slf4j
 public class LoginWS {
@@ -67,36 +60,16 @@ public class LoginWS {
                 .withCookie( new HttpResponse.CookieBuilder()
                     .withCustomValue( "Authorization", token.id )
                     .withDomain( cookieDomain )
-                    .withExpires( DateTime.now().plusMinutes( cookieExpiration ))
+                    .withExpires( DateTime.now().plusMinutes( cookieExpiration ) )
                     .build()
                 );
         } else {
-            final HttpResponse httpResponse = HttpResponse.status( 400 );
-            httpResponse.reasonPhrase = "Username or password is invalid";
+            final HttpResponse httpResponse = HttpResponse.status( 400, "Username or password is invalid" );
 
             log.debug( httpResponse.reasonPhrase );
 
             return httpResponse;
         }
-
-    }
-
-    @WsMethod( method = DELETE, path = "/{email}" )
-    @WsSecurity( role = Role.USER )
-    public HttpResponse logout( @WsParam( from = PATH ) String email,
-                                @WsParam( from = SESSION ) User user ) {
-        if( !Objects.equals( user.email, email ) ) {
-            final HttpResponse httpResponse = HttpResponse.status( 403, "User " + user.email + " cannot logout " +
-                "another users" );
-
-            log.debug( httpResponse.reasonPhrase );
-
-            return httpResponse;
-        }
-
-        authService.invalidateUser( email );
-
-        return HttpResponse.status( 204, "User " + email + " was successfully logged out" );
     }
 
 }
