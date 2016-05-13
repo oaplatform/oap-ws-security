@@ -60,6 +60,7 @@ public class LoginWS {
                 .withCookie( new HttpResponse.CookieBuilder()
                     .withCustomValue( "Authorization", token.id )
                     .withDomain( cookieDomain )
+                    .withPath( "/" )
                     .withExpires( DateTime.now().plusMinutes( cookieExpiration ) )
                     .build()
                 );
