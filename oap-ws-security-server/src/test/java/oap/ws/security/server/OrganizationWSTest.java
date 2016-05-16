@@ -52,230 +52,229 @@ import static org.testng.Assert.*;
 
 public class OrganizationWSTest {
 
-    private final Server server = new Server( 100 );
-    private final WebServices webServices = new WebServices( server, new SessionManager( 10, null, "/" ),
-        WsConfig.CONFIGURATION.fromResource( getClass(), "ws-organization.conf" ) );
+   private final Server server = new Server( 100 );
+   private final WebServices webServices = new WebServices( server, new SessionManager( 10, null, "/" ),
+      WsConfig.CONFIGURATION.fromResource( getClass(), "ws-organization.conf" ) );
 
-    private UserStorage userStorage;
-    private OrganizationStorage organizationStorage;
+   private UserStorage userStorage;
+   private OrganizationStorage organizationStorage;
 
-    private SynchronizedThread listener;
+   private SynchronizedThread listener;
 
-    @BeforeClass
-    public void startServer() {
-        userStorage = new UserStorage( Resources.filePath( OrganizationWSTest.class, "" ).get() );
-        organizationStorage = new OrganizationStorage( Resources.filePath( OrganizationWSTest.class, "" ).get() );
+   @BeforeClass
+   public void startServer() {
+      userStorage = new UserStorage( Env.tmpPath( "users" ) );
+      organizationStorage = new OrganizationStorage( Env.tmpPath( "organizations" ) );
 
-        userStorage.start();
-        organizationStorage.start();
+      userStorage.start();
+      organizationStorage.start();
 
-        Application.register( "ws-organization", new OrganizationWS( organizationStorage, userStorage, "test" ) );
+      Application.register( "ws-organization", new OrganizationWS( organizationStorage, userStorage, "test" ) );
 
-        webServices.start();
-        listener = new SynchronizedThread( new PlainHttpListener( server, Env.port() ) );
-        listener.start();
-    }
+      webServices.start();
+      listener = new SynchronizedThread( new PlainHttpListener( server, Env.port() ) );
+      listener.start();
+   }
 
-    @AfterClass
-    public void stopServer() {
-        listener.stop();
-        server.stop();
-        webServices.stop();
-        reset();
-    }
+   @AfterClass
+   public void stopServer() {
+      listener.stop();
+      server.stop();
+      webServices.stop();
+      reset();
+   }
 
-    @BeforeMethod
-    public void setUp() {
-        userStorage.clear();
-        organizationStorage.clear();
-    }
+   @BeforeMethod
+   public void setUp() {
+      userStorage.clear();
+      organizationStorage.clear();
+   }
 
-    @Test
-    public void testShouldStoreGetDeleteOrganization() throws IOException {
-        final String request = Resources.readString( getClass(), getClass().getSimpleName() + "/"
-            + "12345.json" ).get();
+   @Test
+   public void testShouldStoreGetDeleteOrganization() throws IOException {
+      final String request = Resources.readString( getClass(), getClass().getSimpleName() + "/12345.json" ).get();
 
-        assertPost( HTTP_PREFIX + "/organization/store", request, ContentType.APPLICATION_JSON )
-            .hasCode( 201 );
-        final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
+      assertPost( HTTP_PREFIX + "/organization/store", request, ContentType.APPLICATION_JSON )
+         .hasCode( 201 );
+      final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
 
-        final User sessionUser = new User();
-        sessionUser.organizationId = "12345";
-        sessionUser.role = Role.USER;
+      final User sessionUser = new User();
+      sessionUser.organizationId = "12345";
+      sessionUser.role = Role.USER;
 
-        final HttpResponse httpResponse = organizationWS.getOrganization( "12345", sessionUser );
+      final HttpResponse httpResponse = organizationWS.getOrganization( "12345", sessionUser );
 
-        final Organization organization = Binder.json.unmarshal(
-            Organization.class, EntityUtils.toString( httpResponse.contentEntity ) );
+      final Organization organization = Binder.json.unmarshal(
+         Organization.class, EntityUtils.toString( httpResponse.contentEntity ) );
 
-        assertEquals( organization.id, "12345" );
-        assertEquals( organization.name, "test" );
-        assertEquals( organization.description, "test organization" );
+      assertEquals( organization.id, "12345" );
+      assertEquals( organization.name, "test" );
+      assertEquals( organization.description, "test organization" );
 
-        assertDelete( HTTP_PREFIX + "/organization/remove/12345" ).hasCode( 204 );
+      assertDelete( HTTP_PREFIX + "/organization/remove/12345" ).hasCode( 204 );
 
-        assertFalse( organizationStorage.get( "12345" ).isPresent() );
-    }
+      assertFalse( organizationStorage.get( "12345" ).isPresent() );
+   }
 
-    @Test
-    public void testShouldNotStoreUserIfOrganizationDoesNotExist() {
-        final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
-        final User user = new User();
-        user.email = "test@example.com";
-        user.password = "123456789";
-        user.role = Role.USER;
-        user.organizationId = "12345";
-        user.organizationName = "test";
+   @Test
+   public void testShouldNotStoreUserIfOrganizationDoesNotExist() {
+      final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
+      final User user = new User();
+      user.email = "test@example.com";
+      user.password = "123456789";
+      user.role = Role.USER;
+      user.organizationId = "12345";
+      user.organizationName = "test";
 
-        final HttpResponse httpResponse = organizationWS.storeUser( user, "98765", new User() );
+      final HttpResponse httpResponse = organizationWS.storeUser( user, "98765", new User() );
 
-        assertEquals( httpResponse.code, 404 );
-        assertEquals( httpResponse.reasonPhrase, "Organization 98765 doesn't exists");
-    }
+      assertEquals( httpResponse.code, 404 );
+      assertEquals( httpResponse.reasonPhrase, "Organization 98765 doesn't exists" );
+   }
 
-    @Test
-    public void testShouldNotStoreUserIfOrganizationMismatch() {
-        final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
-        final User user = new User();
-        user.email = "test@example.com";
-        user.password = "123456789";
-        user.role = Role.USER;
-        user.organizationId = "12345";
-        user.organizationName = "test";
+   @Test
+   public void testShouldNotStoreUserIfOrganizationMismatch() {
+      final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
+      final User user = new User();
+      user.email = "test@example.com";
+      user.password = "123456789";
+      user.role = Role.USER;
+      user.organizationId = "12345";
+      user.organizationName = "test";
 
-        final Organization organization = new Organization();
-        organization.id = "98765";
-        organizationStorage.store( organization );
+      final Organization organization = new Organization();
+      organization.id = "98765";
+      organizationStorage.store( organization );
 
-        final HttpResponse httpResponse = organizationWS.storeUser( user, "98765", new User() );
+      final HttpResponse httpResponse = organizationWS.storeUser( user, "98765", new User() );
 
-        assertEquals( httpResponse.code, 409 );
-        assertEquals( httpResponse.reasonPhrase, "Cannot save user test@example.com with organization 12345" +
-            " to organization 98765");
-    }
+      assertEquals( httpResponse.code, 409 );
+      assertEquals( httpResponse.reasonPhrase, "Cannot save user test@example.com with organization 12345" +
+         " to organization 98765" );
+   }
 
-    @Test
-    public void testShouldNotStoreUserIfItExistsInAnotherOrganization() {
-        final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
-        final User user = new User();
-        user.email = "test@example.com";
-        user.password = "123456789";
-        user.role = Role.USER;
-        user.organizationId = "12345";
-        user.organizationName = "test";
+   @Test
+   public void testShouldNotStoreUserIfItExistsInAnotherOrganization() {
+      final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
+      final User user = new User();
+      user.email = "test@example.com";
+      user.password = "123456789";
+      user.role = Role.USER;
+      user.organizationId = "12345";
+      user.organizationName = "test";
 
-        userStorage.store( user );
+      userStorage.store( user );
 
-        final Organization organizationA = new Organization();
-        organizationA.id = "12345";
-        organizationStorage.store( organizationA );
+      final Organization organizationA = new Organization();
+      organizationA.id = "12345";
+      organizationStorage.store( organizationA );
 
-        final Organization organizationB = new Organization();
-        organizationB.id = "98765";
-        organizationStorage.store( organizationB );
+      final Organization organizationB = new Organization();
+      organizationB.id = "98765";
+      organizationStorage.store( organizationB );
 
-        final User userUpdate = new User();
-        userUpdate.email = "test@example.com";
-        userUpdate.organizationId = "98765";
+      final User userUpdate = new User();
+      userUpdate.email = "test@example.com";
+      userUpdate.organizationId = "98765";
 
-        final HttpResponse httpResponse = organizationWS.storeUser( userUpdate, "98765", new User() );
+      final HttpResponse httpResponse = organizationWS.storeUser( userUpdate, "98765", new User() );
 
-        assertEquals( httpResponse.code, 409 );
-        assertEquals( httpResponse.reasonPhrase, "User test@example.com is already present in another organization" );
-    }
+      assertEquals( httpResponse.code, 409 );
+      assertEquals( httpResponse.reasonPhrase, "User test@example.com is already present in another organization" );
+   }
 
-    @Test
-    public void testShouldSaveUserIfSessionUserIsAdmin() {
-        final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
-        final User user = new User();
-        user.email = "test@example.com";
-        user.password = "123456789";
-        user.role = Role.USER;
-        user.organizationId = "12345";
-        user.organizationName = "test";
+   @Test
+   public void testShouldSaveUserIfSessionUserIsAdmin() {
+      final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
+      final User user = new User();
+      user.email = "test@example.com";
+      user.password = "123456789";
+      user.role = Role.USER;
+      user.organizationId = "12345";
+      user.organizationName = "test";
 
-        final Organization organization = new Organization();
-        organization.id = "12345";
-        organizationStorage.store( organization );
+      final Organization organization = new Organization();
+      organization.id = "12345";
+      organizationStorage.store( organization );
 
-        final User sessionUser = new User();
-        sessionUser.role = Role.ADMIN;
+      final User sessionUser = new User();
+      sessionUser.role = Role.ADMIN;
 
-        organizationWS.storeUser( user, "12345", sessionUser );
+      organizationWS.storeUser( user, "12345", sessionUser );
 
-        assertNotNull( userStorage.get( "test@example.com" ).isPresent() );
-    }
+      assertNotNull( userStorage.get( "test@example.com" ).isPresent() );
+   }
 
-    @Test
-    public void testShouldNotSaveUserWithHigherRoleThanSessionUserIfNotAdmin() {
-        final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
-        final User user = new User();
-        user.email = "test@example.com";
-        user.password = "123456789";
-        user.role = Role.ADMIN;
-        user.organizationId = "12345";
-        user.organizationName = "test";
+   @Test
+   public void testShouldNotSaveUserWithHigherRoleThanSessionUserIfNotAdmin() {
+      final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
+      final User user = new User();
+      user.email = "test@example.com";
+      user.password = "123456789";
+      user.role = Role.ADMIN;
+      user.organizationId = "12345";
+      user.organizationName = "test";
 
-        final Organization organization = new Organization();
-        organization.id = "12345";
-        organizationStorage.store( organization );
+      final Organization organization = new Organization();
+      organization.id = "12345";
+      organizationStorage.store( organization );
 
-        final User sessionUser = new User();
-        sessionUser.role = Role.ORGANIZATION_ADMIN;
+      final User sessionUser = new User();
+      sessionUser.role = Role.ORGANIZATION_ADMIN;
 
-        final HttpResponse httpResponse = organizationWS.storeUser( user, "12345", sessionUser );
+      final HttpResponse httpResponse = organizationWS.storeUser( user, "12345", sessionUser );
 
-        assertEquals( httpResponse.code, 403 );
-        assertEquals( httpResponse.reasonPhrase, "User with role ORGANIZATION_ADMIN can't grant role ADMIN to user " +
-            "test@example.com" );
-    }
+      assertEquals( httpResponse.code, 403 );
+      assertEquals( httpResponse.reasonPhrase, "User with role ORGANIZATION_ADMIN can't grant role ADMIN to user " +
+         "test@example.com" );
+   }
 
-    @Test
-    public void testShouldNotSaveUserIfSessionUserHasDifferentOrganization() {
-        final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
-        final User user = new User();
-        user.email = "test@example.com";
-        user.password = "123456789";
-        user.role = Role.USER;
-        user.organizationId = "12345";
-        user.organizationName = "test";
+   @Test
+   public void testShouldNotSaveUserIfSessionUserHasDifferentOrganization() {
+      final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
+      final User user = new User();
+      user.email = "test@example.com";
+      user.password = "123456789";
+      user.role = Role.USER;
+      user.organizationId = "12345";
+      user.organizationName = "test";
 
-        final Organization organization = new Organization();
-        organization.id = "12345";
-        organizationStorage.store( organization );
+      final Organization organization = new Organization();
+      organization.id = "12345";
+      organizationStorage.store( organization );
 
-        final User sessionUser = new User();
-        sessionUser.email = "org-admin@example.com";
-        sessionUser.organizationId = "98765";
-        sessionUser.role = Role.ORGANIZATION_ADMIN;
+      final User sessionUser = new User();
+      sessionUser.email = "org-admin@example.com";
+      sessionUser.organizationId = "98765";
+      sessionUser.role = Role.ORGANIZATION_ADMIN;
 
-        final HttpResponse httpResponse = organizationWS.storeUser( user, "12345", sessionUser );
+      final HttpResponse httpResponse = organizationWS.storeUser( user, "12345", sessionUser );
 
-        assertEquals( httpResponse.code, 403 );
-        assertEquals( httpResponse.reasonPhrase, "User org-admin@example.com cannot operate on users from " +
-            "different organization 12345" );
-    }
+      assertEquals( httpResponse.code, 403 );
+      assertEquals( httpResponse.reasonPhrase, "User org-admin@example.com cannot operate on users from " +
+         "different organization 12345" );
+   }
 
-    @Test
-    public void testShouldSaveUserIfSessionUserIsOrganizationAdmin() {
-        final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
-        final User user = new User();
-        user.email = "test@example.com";
-        user.password = "123456789";
-        user.role = Role.USER;
-        user.organizationId = "12345";
-        user.organizationName = "test";
+   @Test
+   public void testShouldSaveUserIfSessionUserIsOrganizationAdmin() {
+      final OrganizationWS organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
+      final User user = new User();
+      user.email = "test@example.com";
+      user.password = "123456789";
+      user.role = Role.USER;
+      user.organizationId = "12345";
+      user.organizationName = "test";
 
-        final Organization organization = new Organization();
-        organization.id = "12345";
-        organizationStorage.store( organization );
+      final Organization organization = new Organization();
+      organization.id = "12345";
+      organizationStorage.store( organization );
 
-        final User sessionUser = new User();
-        sessionUser.organizationId = "12345";
-        sessionUser.role = Role.ORGANIZATION_ADMIN;
+      final User sessionUser = new User();
+      sessionUser.organizationId = "12345";
+      sessionUser.role = Role.ORGANIZATION_ADMIN;
 
-        organizationWS.storeUser( user, "12345", sessionUser );
+      organizationWS.storeUser( user, "12345", sessionUser );
 
-        assertNotNull( userStorage.get( "test@example.com" ).isPresent() );
-    }
+      assertNotNull( userStorage.get( "test@example.com" ).isPresent() );
+   }
 }
