@@ -8,3 +8,5 @@ vcs.xml
 compiler.xml
 misc.xml
 encodings.xml
+libraries
+inspectionProfiles
