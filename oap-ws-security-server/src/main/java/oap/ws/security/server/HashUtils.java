@@ -32,7 +32,11 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * @see oap.util.Hash#sha256
+ */
 @Slf4j
+@Deprecated
 public final class HashUtils {
 
    private HashUtils() {
