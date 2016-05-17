@@ -1,6 +1,7 @@
 package oap.ws.security.server;
 
 import oap.testng.Env;
+import oap.util.Hash;
 import oap.ws.security.api.Role;
 import oap.ws.security.api.User;
 import org.testng.annotations.BeforeClass;
@@ -29,7 +30,7 @@ public class LogoutWSTest {
       final User user = new User();
       user.email = "test@example.com";
       user.role = Role.ADMIN;
-      user.password = HashUtils.hash( SALT, "12345" );
+      user.password = Hash.sha256( SALT, "12345" );
       user.organizationId = "987654321";
       user.organizationName = "test";
 

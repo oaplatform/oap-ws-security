@@ -26,6 +26,7 @@ package oap.ws.security.server;
 
 import lombok.extern.slf4j.Slf4j;
 import oap.http.HttpResponse;
+import oap.util.Hash;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
 import oap.ws.security.client.WsSecurity;
@@ -157,7 +158,7 @@ public class OrganizationWS {
             return httpResponse;
         }
 
-        storeUser.password = HashUtils.hash( salt, storeUser.password );
+        storeUser.password = Hash.sha256( salt, storeUser.password );
         userStorage.store( storeUser );
 
         log.debug( "New information about user " + storeUser.email + " was successfully added" );

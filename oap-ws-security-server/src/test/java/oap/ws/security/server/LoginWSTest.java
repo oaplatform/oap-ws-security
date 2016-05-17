@@ -29,6 +29,7 @@ import oap.concurrent.SynchronizedThread;
 import oap.http.PlainHttpListener;
 import oap.http.Server;
 import oap.testng.Env;
+import oap.util.Hash;
 import oap.ws.SessionManager;
 import oap.ws.WebServices;
 import oap.ws.WsConfig;
@@ -92,7 +93,7 @@ public class LoginWSTest {
       final User user = new User();
       user.email = "test@example.com";
       user.role = Role.ADMIN;
-      user.password = HashUtils.hash( SALT, "12345" );
+      user.password = Hash.sha256( SALT, "12345" );
       user.organizationId = "987654321";
       user.organizationName = "test";
 

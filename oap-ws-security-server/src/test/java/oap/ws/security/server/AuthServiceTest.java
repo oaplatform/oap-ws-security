@@ -26,6 +26,7 @@ package oap.ws.security.server;
 
 import oap.testng.AbstractTest;
 import oap.testng.Env;
+import oap.util.Hash;
 import oap.ws.security.api.Role;
 import oap.ws.security.api.Token;
 import oap.ws.security.api.User;
@@ -57,7 +58,7 @@ public class AuthServiceTest extends AbstractTest {
    public void testShouldGenerateNewToken() {
       final User user = new User();
       user.email = "test@example.com";
-      user.password = HashUtils.hash( "test", "12345" );
+      user.password = Hash.sha256( "test", "12345" );
       user.role = Role.ADMIN;
 
       userStorage.store( user );
@@ -74,7 +75,7 @@ public class AuthServiceTest extends AbstractTest {
    public void testShouldDeleteExpiredToken() throws InterruptedException {
       final User user = new User();
       user.email = "test@example.com";
-      user.password = HashUtils.hash( "test", "12345" );
+      user.password = Hash.sha256( "test", "12345" );
       user.role = Role.ADMIN;
 
       userStorage.store( user );

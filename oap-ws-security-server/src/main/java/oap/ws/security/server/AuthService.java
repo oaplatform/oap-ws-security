@@ -28,6 +28,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
 import lombok.extern.slf4j.Slf4j;
+import oap.util.Hash;
 import oap.ws.security.api.Token;
 import oap.ws.security.api.User;
 import org.joda.time.DateTime;
@@ -57,7 +58,7 @@ public class AuthService {
         if( userOptional.isPresent() ) {
             final User user = userOptional.get();
 
-            final String inputPassword = HashUtils.hash( salt, password );
+            final String inputPassword = Hash.sha256( salt, password );
             if( user.password.equals( inputPassword ) ) {
                 final List<Token> tokens = new ArrayList<>();
 
