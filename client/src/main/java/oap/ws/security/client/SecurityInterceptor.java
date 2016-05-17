@@ -34,8 +34,6 @@ import oap.ws.security.domain.Role;
 import oap.ws.security.domain.Token;
 import oap.ws.security.domain.User;
 
-import java.net.HttpCookie;
-import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -45,16 +43,6 @@ public class SecurityInterceptor implements Interceptor {
 
     public SecurityInterceptor( TokenService tokenService ) {
         this.tokenService = tokenService;
-    }
-
-    private static String getTokenFromCookie( List<HttpCookie> cookies ) {
-        for( HttpCookie httpCookie : cookies ) {
-            if( httpCookie.getName().equals( "Authorization" ) ) {
-                return httpCookie.getValue();
-            }
-        }
-
-        return null;
     }
 
     @Override
@@ -82,10 +70,10 @@ public class SecurityInterceptor implements Interceptor {
                 }
             } else {
                 final String sessionToken = request.header( "Authorization" ).isPresent() ?
-                    request.header( "Authorization" ).get() : getTokenFromCookie( request.cookies() );
+                    request.header( "Authorization" ).get() : request.cookies().get( "Authorization" );
 
                 if( sessionToken == null ) {
-                    log.debug( "Session token is missing in header or cookie for requested location",
+                    log.debug( "Session or authorization token is missing in header or cookie",
                         request.context.location );
                     final HttpResponse response = HttpResponse.status( 401 );
                     response.reasonPhrase = "Session token is missing in header or cookie";
