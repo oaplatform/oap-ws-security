@@ -24,7 +24,7 @@
 
 package oap.ws.security.client;
 
-import oap.ws.security.api.Token;
+import oap.ws.security.Token;
 
 import java.util.Optional;
 

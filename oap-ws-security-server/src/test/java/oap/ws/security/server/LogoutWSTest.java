@@ -2,8 +2,8 @@ package oap.ws.security.server;
 
 import oap.testng.Env;
 import oap.util.Hash;
-import oap.ws.security.api.Role;
-import oap.ws.security.api.User;
+import oap.ws.security.Role;
+import oap.ws.security.User;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 

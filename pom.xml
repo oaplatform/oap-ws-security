@@ -7,7 +7,7 @@
     <groupId>oap-ws-security</groupId>
     <artifactId>oap-ws-security</artifactId>
     <packaging>pom</packaging>
-    <version>1.5.2</version>
+    <version>1.5.3</version>
     <modules>
         <module>oap-ws-security-client</module>
         <module>oap-ws-security-server</module>

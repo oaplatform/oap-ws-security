@@ -22,19 +22,16 @@
  * SOFTWARE.
  */
 
-package oap.ws.security.api;
+package oap.ws.security;
 
-import lombok.ToString;
-import org.joda.time.DateTime;
+public enum Role {
+    ADMIN( 0 ),
+    ORGANIZATION_ADMIN( 1 ),
+    USER( 2 );
 
-import java.io.Serializable;
+    public final int precedence;
 
-@ToString
-public class Token implements Serializable {
-
-    private static final long serialVersionUID = -2221117654361445000L;
-
-    public String id;
-    public User user;
-    public DateTime created;
+    Role( int precedence ) {
+        this.precedence = precedence;
+    }
 }
