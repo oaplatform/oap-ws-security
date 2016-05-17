@@ -28,8 +28,8 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
 import lombok.extern.slf4j.Slf4j;
-import oap.ws.security.Token;
-import oap.ws.security.User;
+import oap.ws.security.api.Token;
+import oap.ws.security.api.User;
 import org.joda.time.DateTime;
 
 import java.util.*;

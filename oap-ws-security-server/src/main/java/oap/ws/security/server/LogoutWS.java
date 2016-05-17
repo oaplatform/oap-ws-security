@@ -5,13 +5,12 @@ import oap.http.HttpResponse;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
 import oap.ws.security.client.WsSecurity;
-import oap.ws.security.Role;
-import oap.ws.security.User;
+import oap.ws.security.api.Role;
+import oap.ws.security.api.User;
 
 import java.util.Objects;
 
 import static oap.http.Request.HttpMethod.DELETE;
-import static oap.ws.WsParam.From.PATH;
 import static oap.ws.WsParam.From.QUERY;
 import static oap.ws.WsParam.From.SESSION;
 

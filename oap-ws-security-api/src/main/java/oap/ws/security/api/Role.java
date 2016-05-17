@@ -22,31 +22,16 @@
  * SOFTWARE.
  */
 
-package oap.ws.security;
+package oap.ws.security.api;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+public enum Role {
+    ADMIN( 0 ),
+    ORGANIZATION_ADMIN( 1 ),
+    USER( 2 );
 
-import java.io.Serializable;
+    public final int precedence;
 
-@ToString
-@EqualsAndHashCode
-public class User implements Serializable {
-
-    private static final long serialVersionUID = -999111284666144557L;
-
-    public String email;
-    public String password;
-    public Role role;
-    public String organizationId;
-    public String organizationName;
-
-    public User() {
-    }
-
-    public User( Role role, String organizationId, String email ) {
-        this.role = role;
-        this.organizationId = organizationId;
-        this.email = email;
+    Role( int precedence ) {
+        this.precedence = precedence;
     }
 }

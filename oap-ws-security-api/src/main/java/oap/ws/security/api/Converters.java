@@ -22,19 +22,30 @@
  * SOFTWARE.
  */
 
-package oap.ws.security;
+package oap.ws.security.api;
 
-import lombok.ToString;
-import org.joda.time.DateTime;
+public final class Converters {
 
-import java.io.Serializable;
+    private Converters() {
+    }
 
-@ToString
-public class Token implements Serializable {
+    public static User toUserDTO( User user ) {
+        final User userDTO = new User();
+        userDTO.email = user.email;
+        userDTO.role = user.role;
+        userDTO.organizationId = user.organizationId;
+        userDTO.organizationName = user.organizationName;
 
-    private static final long serialVersionUID = -2221117654361445000L;
+        return userDTO;
+    }
 
-    public String id;
-    public User user;
-    public DateTime created;
+    public static Token toTokenDTO( Token token ) {
+        final Token tokenDTO = new Token();
+        tokenDTO.id = token.id;
+        tokenDTO.created = token.created;
+        tokenDTO.user = toUserDTO( token.user );
+
+        return tokenDTO;
+    }
+
 }

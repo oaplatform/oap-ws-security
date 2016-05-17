@@ -22,30 +22,27 @@
  * SOFTWARE.
  */
 
-package oap.ws.security;
+package oap.ws.security.api;
 
-public final class Converters {
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-    private Converters() {
-    }
+import java.io.Serializable;
 
-    public static User toUserDTO( User user ) {
-        final User userDTO = new User();
-        userDTO.email = user.email;
-        userDTO.role = user.role;
-        userDTO.organizationId = user.organizationId;
-        userDTO.organizationName = user.organizationName;
+@ToString
+@EqualsAndHashCode
+public class Organization implements Serializable {
 
-        return userDTO;
-    }
+   private static final long serialVersionUID = -4541112846071445501L;
 
-    public static Token toTokenDTO( Token token ) {
-        final Token tokenDTO = new Token();
-        tokenDTO.id = token.id;
-        tokenDTO.created = token.created;
-        tokenDTO.user = toUserDTO( token.user );
+   public String id;
+   public String name;
+   public String description;
 
-        return tokenDTO;
-    }
+   public Organization() {
+   }
 
+   public Organization( String id ) {
+      this.id = id;
+   }
 }

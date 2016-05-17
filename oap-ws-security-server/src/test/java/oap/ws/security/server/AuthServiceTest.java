@@ -26,9 +26,9 @@ package oap.ws.security.server;
 
 import oap.testng.AbstractTest;
 import oap.testng.Env;
-import oap.ws.security.Role;
-import oap.ws.security.Token;
-import oap.ws.security.User;
+import oap.ws.security.api.Role;
+import oap.ws.security.api.Token;
+import oap.ws.security.api.User;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;

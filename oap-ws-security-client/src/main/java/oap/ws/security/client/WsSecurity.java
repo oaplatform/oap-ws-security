@@ -24,7 +24,7 @@
 
 package oap.ws.security.client;
 
-import oap.ws.security.Role;
+import oap.ws.security.api.Role;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

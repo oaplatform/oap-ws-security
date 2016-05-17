@@ -25,7 +25,7 @@
 package oap.ws.security.server;
 
 import oap.storage.FileStorage;
-import oap.ws.security.User;
+import oap.ws.security.api.User;
 
 import java.nio.file.Path;
 

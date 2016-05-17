@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package oap.ws.security;
+package oap.ws.security.api;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -31,18 +31,22 @@ import java.io.Serializable;
 
 @ToString
 @EqualsAndHashCode
-public class Organization implements Serializable {
+public class User implements Serializable {
 
-   private static final long serialVersionUID = -4541112846071445501L;
+    private static final long serialVersionUID = -999111284666144557L;
 
-   public String id;
-   public String name;
-   public String description;
+    public String email;
+    public String password;
+    public Role role;
+    public String organizationId;
+    public String organizationName;
 
-   public Organization() {
-   }
+    public User() {
+    }
 
-   public Organization( String id ) {
-      this.id = id;
-   }
+    public User( Role role, String organizationId, String email ) {
+        this.role = role;
+        this.organizationId = organizationId;
+        this.email = email;
+    }
 }

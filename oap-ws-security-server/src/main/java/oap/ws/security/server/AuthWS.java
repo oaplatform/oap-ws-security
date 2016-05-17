@@ -26,7 +26,7 @@ package oap.ws.security.server;
 
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
-import oap.ws.security.Token;
+import oap.ws.security.api.Token;
 
 import java.util.Optional;
 

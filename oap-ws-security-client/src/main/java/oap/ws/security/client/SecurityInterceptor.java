@@ -30,9 +30,9 @@ import oap.http.Request;
 import oap.http.Session;
 import oap.reflect.Reflection;
 import oap.ws.Interceptor;
-import oap.ws.security.Token;
-import oap.ws.security.User;
-import oap.ws.security.Role;
+import oap.ws.security.api.Token;
+import oap.ws.security.api.User;
+import oap.ws.security.api.Role;
 
 import java.util.Optional;
 

@@ -25,7 +25,7 @@
 package oap.ws.security.server;
 
 import oap.ws.security.client.TokenService;
-import oap.ws.security.Token;
+import oap.ws.security.api.Token;
 
 import java.util.Optional;
 
