@@ -61,6 +61,7 @@
                         -ea -Xmx1000m -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled
                     </argLine>
                     <useFile>true</useFile>
+                    <testFailureIgnore>true</testFailureIgnore>
                     <disableXmlReport>false</disableXmlReport>
                     <printSummary>true</printSummary>
                     <forkedProcessTimeoutInSeconds>4800</forkedProcessTimeoutInSeconds>
