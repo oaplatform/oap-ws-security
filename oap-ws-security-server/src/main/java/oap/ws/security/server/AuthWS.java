@@ -24,6 +24,7 @@
 
 package oap.ws.security.server;
 
+import oap.http.HttpResponse;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
 import oap.ws.security.Token;
@@ -42,7 +43,9 @@ public class AuthWS {
     }
 
     @WsMethod( method = GET, path = "/{tokenId}" )
-    public Optional<Token> getToken( @WsParam( from = PATH ) String tokenId ) {
-        return authService.getToken( tokenId );
+    public HttpResponse getToken( @WsParam( from = PATH ) String tokenId ) {
+        final Optional<Token> tokenOptional = authService.getToken( tokenId );
+
+        return tokenOptional.isPresent() ? HttpResponse.ok( tokenOptional.get() ) : HttpResponse.NOT_FOUND;
     }
 }
