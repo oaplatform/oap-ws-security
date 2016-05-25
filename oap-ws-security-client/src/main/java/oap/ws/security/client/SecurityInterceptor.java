@@ -36,6 +36,8 @@ import oap.ws.security.Role;
 
 import java.util.Optional;
 
+import static java.lang.String.format;
+
 @Slf4j
 public class SecurityInterceptor implements Interceptor {
 
@@ -50,11 +52,12 @@ public class SecurityInterceptor implements Interceptor {
         final Optional<WsSecurity> annotation = method.findAnnotation( WsSecurity.class );
         if( annotation.isPresent() ) {
             if( session == null ) {
-                log.error( "Session doesn't exist; check if service is session aware" );
-                final HttpResponse response = HttpResponse.status( 500 );
-                response.reasonPhrase = "Session doesn't exist; check if service is session aware";
+                final HttpResponse httpResponse = HttpResponse.status( 500, "Session doesn't exist; check if service " +
+                   "is session aware" );
 
-                return Optional.of( response );
+                log.error( httpResponse.toString() );
+
+                return Optional.of( httpResponse );
             }
 
             final Optional<Object> optionalUser = session.get( "user" );
@@ -65,30 +68,35 @@ public class SecurityInterceptor implements Interceptor {
                 final Role methodRole = annotation.get().role();
 
                 if( user.role.precedence > methodRole.precedence ) {
-                    log.debug( "User [{}] has no access to method [{}]", user.email, method.name() );
-                    return Optional.of( HttpResponse.status( 403 ) );
+                    final HttpResponse httpResponse = HttpResponse.status( 403, format("User [%s] has no access to method " +
+                       "[%s]", user.email, method.name() ) );
+
+                    log.debug( httpResponse.toString() );
+
+                    return Optional.of( httpResponse );
                 }
             } else {
                 final String sessionToken = request.header( "Authorization" ).isPresent() ?
                     request.header( "Authorization" ).get() : request.cookies().get( "Authorization" );
 
                 if( sessionToken == null ) {
-                    log.debug( "Session or authorization token is missing in header or cookie",
-                        request.context.location );
-                    final HttpResponse response = HttpResponse.status( 401 );
-                    response.reasonPhrase = "Session token is missing in header or cookie";
+                    final HttpResponse httpResponse = HttpResponse.status( 401, "Session token is missing in " +
+                       "header or cookie" );
 
-                    return Optional.of( response );
+                    log.debug( httpResponse.toString() );
+
+                    return Optional.of( httpResponse );
                 }
 
                 final Optional<Token> optionalToken = tokenService.getToken( sessionToken );
 
                 if( !optionalToken.isPresent() ) {
-                    log.debug( "Token id [{}] expired or was not created", sessionToken );
-                    final HttpResponse response = HttpResponse.status( 401 );
-                    response.reasonPhrase = "Auth token for user expired or was not created";
+                    final HttpResponse httpResponse = HttpResponse.status( 401, format("Token id [%s] expired or was " +
+                       "not created", sessionToken ) );
 
-                    return Optional.of( response );
+                    log.debug( httpResponse.toString() );
+
+                    return Optional.of( httpResponse );
                 }
 
                 final Token token = optionalToken.get();
@@ -100,8 +108,12 @@ public class SecurityInterceptor implements Interceptor {
                 final Role methodRole = annotation.get().role();
 
                 if( user.role.precedence > methodRole.precedence ) {
-                    log.debug( "User [{}] has no access to method [{}]", user.email, method.name() );
-                    return Optional.of( HttpResponse.status( 403 ) );
+                    final HttpResponse httpResponse = HttpResponse.status( 403, format("User [%s] has no access to " +
+                       "method [%s]", user.email, method.name() ) );
+
+                    log.debug( httpResponse.toString() );
+
+                    return Optional.of( httpResponse );
                 }
             }
         }
