@@ -24,16 +24,22 @@
 
 package oap.ws.security.server;
 
+import lombok.extern.slf4j.Slf4j;
 import oap.http.HttpResponse;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
+import oap.ws.security.Role;
 import oap.ws.security.Token;
+import oap.ws.security.User;
+import oap.ws.security.client.WsSecurity;
 
 import java.util.Optional;
 
 import static oap.http.Request.HttpMethod.GET;
 import static oap.ws.WsParam.From.PATH;
+import static oap.ws.WsParam.From.SESSION;
 
+@Slf4j
 public class AuthWS {
 
     private final AuthService authService;
@@ -43,9 +49,26 @@ public class AuthWS {
     }
 
     @WsMethod( method = GET, path = "/{tokenId}" )
-    public HttpResponse getToken( @WsParam( from = PATH ) String tokenId ) {
+    @WsSecurity( role = Role.USER )
+    public HttpResponse getToken( @WsParam( from = PATH ) String tokenId,
+                                  @WsParam( from = SESSION ) User user ) {
         final Optional<Token> tokenOptional = authService.getToken( tokenId );
 
-        return tokenOptional.isPresent() ? HttpResponse.ok( tokenOptional.get() ) : HttpResponse.NOT_FOUND;
+        if ( tokenOptional.isPresent() ) {
+            final Token token = tokenOptional.get();
+
+            if ( Role.ADMIN.equals( user.role ) || token.user.email.equals( user.email ) ) {
+                return HttpResponse.ok( token );
+            } else {
+                final HttpResponse httpResponse = HttpResponse.status( 403, "User " + user.email + " " +
+                        "cannot view requested token" );
+
+                log.debug( httpResponse.reasonPhrase );
+
+                return httpResponse;
+            }
+        } else {
+            return HttpResponse.NOT_FOUND;
+        }
     }
 }
