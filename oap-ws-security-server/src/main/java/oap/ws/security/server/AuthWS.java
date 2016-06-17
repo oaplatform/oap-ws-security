@@ -47,7 +47,6 @@ public class AuthWS {
     }
 
     @WsMethod( method = GET, path = "/{tokenId}" )
-    @WsSecurity( role = Role.USER )
     public HttpResponse getToken( @WsParam( from = PATH ) String tokenId ) {
         final Optional<Token> tokenOptional = authService.getToken( tokenId );
 
