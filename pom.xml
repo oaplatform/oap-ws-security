@@ -7,7 +7,7 @@
     <groupId>oap-ws-security</groupId>
     <artifactId>oap-ws-security</artifactId>
     <packaging>pom</packaging>
-    <version>1.5.8</version>
+    <version>1.6.0</version>
     <modules>
         <module>oap-ws-security-client</module>
         <module>oap-ws-security-server</module>
@@ -29,9 +29,10 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
 
+        <oap.version>1.18.13</oap.version>
         <testng.version>6.9.9</testng.version>
         <logback.version>1.1.3</logback.version>
-        <slf4j.version>1.7.13</slf4j.version>
+        <slf4j.version>1.7.21</slf4j.version>
         <httpcomponents.version>4.4.4</httpcomponents.version>
         <joda.version>2.9.3</joda.version>
         <jackson.version>2.7</jackson.version>
@@ -65,7 +66,7 @@
                     <disableXmlReport>false</disableXmlReport>
                     <printSummary>true</printSummary>
                     <forkedProcessTimeoutInSeconds>4800</forkedProcessTimeoutInSeconds>
-                    <useSystemClassLoader>false</useSystemClassLoader>
+`                    <useSystemClassLoader>false</useSystemClassLoader>
                     <runOrder>balanced</runOrder>
                     <includes>
                         <include>**/*Test.*</include>

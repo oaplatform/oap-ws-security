@@ -29,6 +29,7 @@ import oap.concurrent.SynchronizedThread;
 import oap.http.HttpResponse;
 import oap.http.PlainHttpListener;
 import oap.http.Server;
+import oap.http.cors.GenericCorsPolicy;
 import oap.io.Resources;
 import oap.json.Binder;
 import oap.testng.Env;
@@ -54,6 +55,7 @@ public class OrganizationWSTest {
 
    private final Server server = new Server( 100 );
    private final WebServices webServices = new WebServices( server, new SessionManager( 10, null, "/" ),
+      new GenericCorsPolicy( "*", "Authorization", true ),
       WsConfig.CONFIGURATION.fromResource( getClass(), "ws-organization.conf" ) );
 
    private UserStorage userStorage;

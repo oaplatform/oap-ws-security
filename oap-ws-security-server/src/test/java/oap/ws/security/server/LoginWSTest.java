@@ -28,6 +28,7 @@ import oap.application.Application;
 import oap.concurrent.SynchronizedThread;
 import oap.http.PlainHttpListener;
 import oap.http.Server;
+import oap.http.cors.GenericCorsPolicy;
 import oap.testng.Env;
 import oap.util.Hash;
 import oap.ws.SessionManager;
@@ -49,6 +50,7 @@ public class LoginWSTest {
 
    private final Server server = new Server( 100 );
    private final WebServices webServices = new WebServices( server, new SessionManager( 10, null, "/" ),
+      new GenericCorsPolicy( "*", "Authorization", true ),
       WsConfig.CONFIGURATION.fromResource( getClass(), "ws-login.conf" ) );
 
    private UserStorage userStorage;
