@@ -25,11 +25,6 @@
         </dependency>
         <dependency>
             <groupId>oap</groupId>
-            <artifactId>oap-remoting-server</artifactId>
-            <version>${oap.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>oap</groupId>
             <artifactId>oap-ws</artifactId>
             <version>${oap.version}</version>
             <exclusions>
