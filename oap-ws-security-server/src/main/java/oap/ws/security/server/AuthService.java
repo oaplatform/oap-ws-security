@@ -52,7 +52,7 @@ public class AuthService {
         this.salt = salt;
     }
 
-    public Optional<Token> generateToken( String email, String password ) {
+    public synchronized Optional<Token> generateToken( String email, String password ) {
         final Optional<User> userOptional = userStorage.get( email );
 
         if( userOptional.isPresent() ) {
@@ -92,7 +92,7 @@ public class AuthService {
         return Optional.empty();
     }
 
-    public Optional<Token> getToken( String tokenId ) {
+    public synchronized Optional<Token> getToken( String tokenId ) {
         return Optional.ofNullable( tokenStorage.getIfPresent( tokenId ) );
     }
 
