@@ -52,7 +52,7 @@ public class AuthService {
         this.salt = salt;
     }
 
-    public synchronized Optional<Token> generateToken( String email, String password ) {
+    public Optional<Token> generateToken( String email, String password ) {
         final Optional<User> userOptional = userStorage.get( email );
 
         if( userOptional.isPresent() ) {
@@ -62,29 +62,31 @@ public class AuthService {
             if( user.password.equals( inputPassword ) ) {
                 final List<Token> tokens = new ArrayList<>();
 
-                tokenStorage.asMap().forEach( ( s, token ) -> {
-                    if( token.user.email.equals( user.email ) ) {
-                        tokens.add( token );
+                synchronized( this ) {
+                    tokenStorage.asMap().forEach( ( s, token ) -> {
+                        if ( token.user.email.equals( user.email ) ) {
+                            tokens.add( token );
+                        }
+                    });
+
+                    if ( tokens.isEmpty() ) {
+                        log.debug( "Generating new token for user [{}]...", user.email );
+                        final Token token = new Token();
+                        token.user = user;
+                        token.created = DateTime.now();
+                        token.id = UUID.randomUUID().toString();
+
+                        tokenStorage.put( token.id, token );
+
+                        return Optional.of( token );
+                    } else {
+                        final Token existingToken = Iterables.getOnlyElement( tokens );
+
+                        log.debug( "Updating existing token for user [{}]...", user.email );
+                        tokenStorage.put( existingToken.id, existingToken );
+
+                        return Optional.of( existingToken );
                     }
-                } );
-
-                if( tokens.isEmpty() ) {
-                    log.debug( "Generating new token for user [{}]...", user.email );
-                    final Token token = new Token();
-                    token.user = user;
-                    token.created = DateTime.now();
-                    token.id = UUID.randomUUID().toString();
-
-                    tokenStorage.put( token.id, token );
-
-                    return Optional.of( token );
-                } else {
-                    final Token existingToken = Iterables.getOnlyElement( tokens );
-
-                    log.debug( "Updating existing token for user [{}]...", user.email );
-                    tokenStorage.put( existingToken.id, existingToken );
-
-                    return Optional.of( existingToken );
                 }
             }
         }
