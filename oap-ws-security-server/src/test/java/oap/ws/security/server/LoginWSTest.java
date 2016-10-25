@@ -63,8 +63,6 @@ public class LoginWSTest {
       userStorage = new UserStorage( Env.tmpPath( "users" ) );
       authService = new AuthService( userStorage, 1, "test" );
 
-      userStorage.start();
-
       Application.register( "ws-login", new LoginWS( authService, null, 10 ) );
 
       webServices.start();

@@ -68,9 +68,6 @@ public class OrganizationWSTest {
       userStorage = new UserStorage( Env.tmpPath( "users" ) );
       organizationStorage = new OrganizationStorage( Env.tmpPath( "organizations" ) );
 
-      userStorage.start();
-      organizationStorage.start();
-
       Application.register( "ws-organization", new OrganizationWS( organizationStorage, userStorage, "test" ) );
 
       webServices.start();

@@ -21,8 +21,6 @@ public class LogoutWSTest {
    public void startServer() {
       userStorage = new UserStorage( Env.tmpPath( "users" ) );
       authService = new AuthService( userStorage, 1, SALT );
-
-      userStorage.start();
    }
 
    @Test

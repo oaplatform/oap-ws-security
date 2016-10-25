@@ -45,8 +45,6 @@ public class AuthServiceTest extends AbstractTest {
    public void setUp() {
       userStorage = new UserStorage( Env.tmpPath( "users" ) );
       authService = new AuthService( userStorage, 1, "test" );
-
-      userStorage.start();
    }
 
    @AfterTest
