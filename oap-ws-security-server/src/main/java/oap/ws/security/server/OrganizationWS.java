@@ -163,7 +163,7 @@ public class OrganizationWS {
 
         log.debug( "New information about user " + storeUser.email + " was successfully added" );
 
-        final HttpResponse httpResponse = HttpResponse.ok( storeUser );
+        final HttpResponse httpResponse = HttpResponse.ok( Converters.toUserDTO( storeUser ) );
         httpResponse.code = 201;
 
         return httpResponse;
