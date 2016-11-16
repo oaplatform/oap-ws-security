@@ -16,7 +16,7 @@ interface OrganizationWSI {
 
     void removeOrganization( String organizationId );
 
-    List<User> getAllUsers();
+    List<User> getAllUsers(String organizationId);
 
     User storeUser( User storeUser, String organizationId, User user );
 

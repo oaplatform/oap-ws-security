@@ -61,12 +61,16 @@ public class OrganizationWSTest {
 
    private SynchronizedThread listener;
 
+   private OrganizationWS organizationWS;
+
    @BeforeClass
    public void startServer() {
       userStorage = new UserStorage( Env.tmpPath( "users" ) );
       organizationStorage = new OrganizationStorage( Env.tmpPath( "organizations" ) );
 
-      Application.register( "ws-organization", new OrganizationWS( organizationStorage, userStorage, "test" ) );
+      organizationWS = new OrganizationWS(organizationStorage, userStorage, "test");
+
+      Application.register( "ws-organization", organizationWS);
 
       webServices.start();
       listener = new SynchronizedThread( new PlainHttpListener( server, Env.port() ) );
@@ -93,13 +97,10 @@ public class OrganizationWSTest {
 
       assertPost( HTTP_PREFIX + "/organization/store", request, ContentType.APPLICATION_JSON )
          .hasCode( 200 );
-      final OrganizationWS organizationWSImpl = new OrganizationWS( organizationStorage, userStorage, "test" );
 
-      final User sessionUser = new User();
-      sessionUser.organizationId = "12345";
-      sessionUser.role = Role.USER;
+      final User sessionUser = new User(Role.USER,"12345", "test@test.com");
 
-      final Organization organization = organizationWSImpl.getOrganization( "12345", sessionUser ).get();
+      final Organization organization = organizationWS.getOrganization( "12345", sessionUser ).get();
 
       assertEquals( organization.id, "12345" );
       assertEquals( organization.name, "test" );
@@ -112,174 +113,125 @@ public class OrganizationWSTest {
 
    @Test
    public void testShouldNotStoreUserIfOrganizationDoesNotExist() {
-      final OrganizationWS organizationWSImpl = new OrganizationWS( organizationStorage, userStorage, "test" );
-      final User user = new User();
-      user.email = "test@example.com";
+      final User user = new User(Role.USER, "12345", "test@example.com");
       user.password = "123456789";
-      user.role = Role.USER;
-      user.organizationId = "12345";
       user.organizationName = "test";
 
-      final User userUpdate = new User();
-      userUpdate.email = "test-2@example.com";
-      userUpdate.organizationId = "98765";
-      userUpdate.role = Role.USER;
+      final User userUpdate = new User(Role.USER, "98765", "test-2@example.com");
 
       validating(OrganizationWSI.class)
               .isError(403, "User [test@example.com] has no access to organization [98765]")
-              .forInstance(organizationWSImpl)
+              .forInstance(organizationWS)
               .storeUser( userUpdate, "98765", user );
    }
 
    @Test
    public void testShouldNotStoreUserIfOrganizationMismatch() {
-      final OrganizationWS organizationWSImpl = new OrganizationWS( organizationStorage, userStorage, "test" );
-      final User user = new User();
-      user.email = "test@example.com";
+      final User user = new User(Role.ORGANIZATION_ADMIN, "12345","test@example.com");
       user.password = "123456789";
-      user.role = Role.ORGANIZATION_ADMIN;
-      user.organizationId = "12345";
       user.organizationName = "test";
 
-      final Organization organization = new Organization();
-      organization.id = "98765";
+      final Organization organization = new Organization("98765");
 
       organizationStorage.store( organization );
 
-      final User userUpdate = new User();
-      userUpdate.email = "test-2@example.com";
-      userUpdate.organizationId = "98765";
-      userUpdate.role = Role.USER;
+      final User userUpdate = new User(Role.USER,"98765", "test-2@example.com");
 
       validating(OrganizationWSI.class)
               .isError(403, "User [test@example.com] has no access to organization [98765]")
-              .forInstance(organizationWSImpl)
+              .forInstance(organizationWS)
               .storeUser( userUpdate, "98765", user );
    }
 
    @Test
    public void testShouldNotStoreUserIfItExistsInAnotherOrganization() {
-      final OrganizationWS organizationWSImpl = new OrganizationWS( organizationStorage, userStorage, "test" );
-      final User user = new User();
-      user.email = "test@example.com";
+      final User user = new User(Role.ADMIN, "12345", "test@example.com");
       user.password = "123456789";
-      user.role = Role.ADMIN;
-      user.organizationId = "12345";
       user.organizationName = "test";
 
       userStorage.store( user );
 
-      final Organization organizationA = new Organization();
-      organizationA.id = "12345";
+      final Organization organizationA = new Organization("12345");
 
-      final Organization organizationB = new Organization();
-      organizationB.id = "98765";
+      final Organization organizationB = new Organization("98765");
 
       organizationStorage.store( organizationA );
       organizationStorage.store( organizationB );
 
-      final User userUpdate = new User();
-      userUpdate.email = "test@example.com";
-      userUpdate.organizationId = "98765";
-      userUpdate.role = Role.USER;
+      final User userUpdate = new User(Role.USER, "98765", "test@example.com");
 
       validating(OrganizationWSI.class)
               .isError(409, "User [test@example.com] is already taken")
-              .forInstance(organizationWSImpl)
+              .forInstance(organizationWS)
               .storeUser( userUpdate, "98765", user );
    }
 
    @Test
    public void testShouldSaveUserIfSessionUserIsAdmin() {
-      final OrganizationWS organizationWSImpl = new OrganizationWS( organizationStorage, userStorage, "test" );
-      final User user = new User();
-      user.email = "test@example.com";
+      final User user = new User(Role.USER, "12345", "test@example.com");
       user.password = "123456789";
-      user.role = Role.USER;
-      user.organizationId = "12345";
       user.organizationName = "test";
 
-      final Organization organization = new Organization();
-      organization.id = "12345";
+      final Organization organization = new Organization("12345");
+
       organizationStorage.store( organization );
 
-      final User sessionUser = new User();
-      sessionUser.role = Role.ADMIN;
+      final User sessionUser = new User(Role.ADMIN, "someOrg", "98765");
 
-      organizationWSImpl.storeUser( user, "12345", sessionUser );
+      organizationWS.storeUser( user, "12345", sessionUser );
 
       assertNotNull( userStorage.get( "test@example.com" ).isPresent() );
    }
 
    @Test
    public void testShouldNotSaveUserWithHigherRoleThanSessionUserIfNotAdmin() {
-      final OrganizationWS organizationWSImpl = new OrganizationWS( organizationStorage, userStorage, "test" );
-      final User user = new User();
-      user.email = "test@example.com";
+      final User user = new User(Role.ADMIN, "12345", "test@example.com");
       user.password = "123456789";
-      user.role = Role.ADMIN;
-      user.organizationId = "12345";
       user.organizationName = "test";
 
-      final Organization organization = new Organization();
-      organization.id = "12345";
+      final Organization organization = new Organization("12345");
+
       organizationStorage.store( organization );
 
-      final User sessionUser = new User();
-      sessionUser.email = "sessionUser@user.com";
-      sessionUser.role = Role.ORGANIZATION_ADMIN;
-      sessionUser.organizationId = "12345";
+      final User sessionUser = new User(Role.ORGANIZATION_ADMIN, "12345", "sessionUser@test.com");
 
       validating(OrganizationWSI.class)
-              .isError(403, "User [sessionUser@user.com] doesn't have enough permissions")
-              .forInstance(organizationWSImpl)
+              .isError(403, "User [sessionUser@test.com] doesn't have enough permissions")
+              .forInstance(organizationWS)
               .storeUser( user, "12345", sessionUser );
    }
 
    @Test
    public void testShouldNotSaveUserIfSessionUserHasDifferentOrganization() {
-      final OrganizationWS organizationWSImpl = new OrganizationWS( organizationStorage, userStorage, "test" );
-      final User user = new User();
-      user.email = "test@example.com";
+      final User user = new User(Role.USER, "12345", "test@example.com");
       user.password = "123456789";
-      user.role = Role.USER;
-      user.organizationId = "12345";
       user.organizationName = "test";
 
-      final Organization organization = new Organization();
-      organization.id = "12345";
+      final Organization organization = new Organization("12345");
+
       organizationStorage.store( organization );
 
-      final User sessionUser = new User();
-      sessionUser.email = "org-admin@example.com";
-      sessionUser.organizationId = "98765";
-      sessionUser.role = Role.ORGANIZATION_ADMIN;
+      final User sessionUser = new User(Role.ORGANIZATION_ADMIN, "98765", "org-admin@example.com");
 
       validating(OrganizationWSI.class)
               .isError(403, "User [org-admin@example.com] has no access to organization [12345]")
-              .forInstance(organizationWSImpl)
+              .forInstance(organizationWS)
               .storeUser( user, "12345", sessionUser );
    }
 
    @Test
    public void testShouldSaveUserIfSessionUserIsOrganizationAdmin() {
-      final OrganizationWS organizationWSImpl = new OrganizationWS( organizationStorage, userStorage, "test" );
-      final User user = new User();
-      user.email = "test@example.com";
+      final User user = new User(Role.USER, "12345", "test@example.com");
       user.password = "123456789";
-      user.role = Role.USER;
-      user.organizationId = "12345";
       user.organizationName = "test";
 
-      final Organization organization = new Organization();
-      organization.id = "12345";
+      final Organization organization = new Organization("12345");
+
       organizationStorage.store( organization );
 
-      final User sessionUser = new User();
-      sessionUser.organizationId = "12345";
-      sessionUser.role = Role.ORGANIZATION_ADMIN;
+      final User sessionUser = new User(Role.ORGANIZATION_ADMIN, "12345", "sessionUser@example.com");
 
-      organizationWSImpl.storeUser( user, "12345", sessionUser );
+      organizationWS.storeUser( user, "12345", sessionUser );
 
       assertNotNull( userStorage.get( "test@example.com" ).isPresent() );
    }

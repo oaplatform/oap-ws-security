@@ -74,13 +74,13 @@ public class OrganizationWS implements OrganizationWSI {
         return organization;
     }
 
-    @WsMethod( method = GET, path = "/all" )
+    @WsMethod( method = GET, path = "/" )
     @WsSecurity( role = ADMIN )
     @Override
     public List<Organization> getAllOrganizations() {
         log.debug( "Fetching all organizations");
 
-        return organizationStorage.select().collect( Collectors.toList() );
+        return organizationStorage.select().toList();
     }
 
     @WsMethod( method = GET, path = "/{organizationId}" )
@@ -101,16 +101,16 @@ public class OrganizationWS implements OrganizationWSI {
         log.debug( "Organization [{}] deleted", organizationId );
     }
 
-    @WsMethod( method = GET, path = "/users" )
+    @WsMethod( method = GET, path = "/{organizationId}/users" )
     @WsSecurity( role = ADMIN )
     @Override
-    public List<User> getAllUsers() {
-        log.debug( "Fetching all users" );
+    public List<User> getAllUsers(@WsParam (from = PATH) String organizationId) {
+        log.debug( "Fetching all users for organization [{}]",  organizationId);
 
-        return userStorage.select().collect( Collectors.toList() );
+        return userStorage.select().filter(user -> user.organizationId.equals(organizationId)).toList();
     }
 
-    @WsMethod( method = POST, path = "/{organizationId}/store-user" )
+    @WsMethod( method = POST, path = "/{organizationId}/store" )
     @WsSecurity( role = Role.USER )
     @WsValidate({"validateOrganizationAccess","validateUserUniqueness","validateUserPrecedence","validateUserCreationRole"})
     @Override
@@ -125,7 +125,7 @@ public class OrganizationWS implements OrganizationWSI {
         return Converters.toUserDTO( storeUser );
     }
 
-    @WsMethod( method = GET, path = "/{organizatinoId}/user/{email}" )
+    @WsMethod( method = GET, path = "/{organizationId}/users/{email}" )
     @WsSecurity( role = Role.USER )
     @WsValidate({"validateOrganizationAccess", "validateUserAccessById"})
     @Override
@@ -135,7 +135,7 @@ public class OrganizationWS implements OrganizationWSI {
         return userStorage.get( email );
     }
 
-    @WsMethod( method = DELETE, path = "/{organizationId}/remove-user/{email}" )
+    @WsMethod( method = DELETE, path = "/{organizationId}/users/{email}/delete" )
     @WsSecurity( role = Role.ORGANIZATION_ADMIN )
     @WsValidate({"validateOrganizationAccess","validateUserAccessById"})
     @Override
@@ -179,14 +179,14 @@ public class OrganizationWS implements OrganizationWSI {
 
     @SuppressWarnings( "unused" )
     public ValidationErrors validateUserPrecedence( User user, User storeUser) {
-        return ( !user.role.equals( ADMIN ) && storeUser.role.precedence < user.role.precedence )
+        return ( user.role != Role.ADMIN && storeUser.role.precedence < user.role.precedence )
                 ? ValidationErrors.error(HTTP_FORBIDDEN, format("User [%s] doesn't have enough permissions", user.email))
                 : ValidationErrors.empty();
     }
 
     @SuppressWarnings( "unused" )
     public ValidationErrors validateUserCreationRole( User user, User storeUser) {
-        return (user.role.equals( Role.USER ) && !user.email.equals( storeUser.email ) )
+        return (user.role == Role.USER && !user.email.equals( storeUser.email ) )
                 ? ValidationErrors.error(HTTP_FORBIDDEN, format("User [%s] doesn't have enough permissions", user.email))
                 : ValidationErrors.empty();
     }
