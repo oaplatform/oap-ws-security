@@ -5,35 +5,23 @@
     <parent>
         <artifactId>oap-ws-security</artifactId>
         <groupId>oap-ws-security</groupId>
-        <version>1.6.6</version>
+        <version>1.7.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>oap-ws-security-server</artifactId>
-    <version>1.6.6</version>
 
     <dependencies>
         <dependency>
             <groupId>oap-ws-security</groupId>
             <artifactId>oap-ws-security-api</artifactId>
-            <version>1.6.6</version>
-        </dependency>
-        <dependency>
-            <groupId>oap-ws-security</groupId>
-            <artifactId>oap-ws-security-client</artifactId>
-            <version>1.6.6</version>
+            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>oap</groupId>
             <artifactId>oap-ws</artifactId>
             <version>${oap.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>oap-ws-security</groupId>
-                    <artifactId>oap-ws-security-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+         </dependency>
         <dependency>
             <groupId>oap</groupId>
             <artifactId>oap-remoting-server</artifactId>

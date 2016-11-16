@@ -22,14 +22,11 @@
  * SOFTWARE.
  */
 
-package oap.ws.security.client;
+package oap.ws.security;
 
 import oap.http.*;
 import oap.reflect.Reflect;
 import oap.reflect.Reflection;
-import oap.ws.security.Role;
-import oap.ws.security.Token;
-import oap.ws.security.User;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.HttpGet;
 import org.joda.time.DateTime;

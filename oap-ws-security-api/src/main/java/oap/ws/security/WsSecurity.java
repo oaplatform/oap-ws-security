@@ -22,12 +22,18 @@
  * SOFTWARE.
  */
 
-package oap.ws.security.client;
+package oap.ws.security;
 
-import oap.ws.security.Token;
+import oap.ws.security.Role;
 
-import java.util.Optional;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public interface TokenService {
-    Optional<Token> getToken(String tokenId);
+@Target( ElementType.METHOD )
+@Retention( RetentionPolicy.RUNTIME )
+public @interface WsSecurity {
+
+   Role role();
 }

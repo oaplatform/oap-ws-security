@@ -22,23 +22,12 @@
  * SOFTWARE.
  */
 
-package oap.ws.security.server;
+package oap.ws.security;
 
-import oap.ws.security.client.TokenService;
 import oap.ws.security.Token;
 
 import java.util.Optional;
 
-public class TokenServiceImpl implements TokenService {
-
-    private final AuthService authService;
-
-    public TokenServiceImpl( AuthService authService ) {
-        this.authService = authService;
-    }
-
-    @Override
-    public Optional<Token> getToken( String tokenId ) {
-        return authService.getToken( tokenId );
-    }
+public interface TokenService {
+    Optional<Token> getToken(String tokenId);
 }

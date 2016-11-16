@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package oap.ws.security.client;
+package oap.ws.security;
 
 import lombok.extern.slf4j.Slf4j;
 import oap.http.HttpResponse;
@@ -30,9 +30,6 @@ import oap.http.Request;
 import oap.http.Session;
 import oap.reflect.Reflection;
 import oap.ws.Interceptor;
-import oap.ws.security.Token;
-import oap.ws.security.User;
-import oap.ws.security.Role;
 
 import java.util.Optional;
 
@@ -52,8 +49,7 @@ public class SecurityInterceptor implements Interceptor {
         final Optional<WsSecurity> annotation = method.findAnnotation( WsSecurity.class );
         if( annotation.isPresent() ) {
             if( session == null ) {
-                final HttpResponse httpResponse = HttpResponse.status( 500, "Session doesn't exist; check if service " +
-                   "is session aware" );
+                final HttpResponse httpResponse = HttpResponse.status( 500, "Session doesn't exist; check if service is session aware" );
 
                 log.error( httpResponse.toString() );
 
@@ -68,20 +64,17 @@ public class SecurityInterceptor implements Interceptor {
                 final Role methodRole = annotation.get().role();
 
                 if( user.role.precedence > methodRole.precedence ) {
-                    final HttpResponse httpResponse = HttpResponse.status( 403, format("User [%s] has no access to method " +
-                       "[%s]", user.email, method.name() ) );
+                    final HttpResponse httpResponse = HttpResponse.status( 403, format( "User [%s] has no access to method [%s]", user.email, method.name() ) );
 
                     log.debug( httpResponse.toString() );
 
                     return Optional.of( httpResponse );
                 }
             } else {
-                final String sessionToken = request.header( "Authorization" ).isPresent() ?
-                    request.header( "Authorization" ).get() : request.cookies().get( "Authorization" );
+                final String sessionToken = request.header( "Authorization" ).orElse( request.cookie( "Authorization" ).orElse( null ) );
 
                 if( sessionToken == null ) {
-                    final HttpResponse httpResponse = HttpResponse.status( 401, "Session token is missing in " +
-                       "header or cookie" );
+                    final HttpResponse httpResponse = HttpResponse.status( 401, "Session token is missing in header or cookie" );
 
                     log.debug( httpResponse.toString() );
 
@@ -91,8 +84,8 @@ public class SecurityInterceptor implements Interceptor {
                 final Optional<Token> optionalToken = tokenService.getToken( sessionToken );
 
                 if( !optionalToken.isPresent() ) {
-                    final HttpResponse httpResponse = HttpResponse.status( 401, format("Token id [%s] expired or was " +
-                       "not created", sessionToken ) );
+                    final HttpResponse httpResponse = HttpResponse.status( 401, format( "Token id [%s] expired or was " +
+                            "not created", sessionToken ) );
 
                     log.debug( httpResponse.toString() );
 
@@ -108,8 +101,7 @@ public class SecurityInterceptor implements Interceptor {
                 final Role methodRole = annotation.get().role();
 
                 if( user.role.precedence > methodRole.precedence ) {
-                    final HttpResponse httpResponse = HttpResponse.status( 403, format("User [%s] has no access to " +
-                       "method [%s]", user.email, method.name() ) );
+                    final HttpResponse httpResponse = HttpResponse.status( 403, format( "User [%s] has no access to method [%s]", user.email, method.name() ) );
 
                     log.debug( httpResponse.toString() );
 

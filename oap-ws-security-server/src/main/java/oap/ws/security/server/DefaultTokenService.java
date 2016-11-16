@@ -22,30 +22,23 @@
  * SOFTWARE.
  */
 
-package oap.ws.security;
+package oap.ws.security.server;
 
-public final class Converters {
+import oap.ws.security.TokenService;
+import oap.ws.security.Token;
 
-    private Converters() {
+import java.util.Optional;
+
+public class DefaultTokenService implements TokenService {
+
+    private final AuthService authService;
+
+    public DefaultTokenService( AuthService authService ) {
+        this.authService = authService;
     }
 
-    public static User toUserDTO( User user ) {
-        final User userDTO = new User();
-        userDTO.email = user.email;
-        userDTO.role = user.role;
-        userDTO.organizationId = user.organizationId;
-        userDTO.organizationName = user.organizationName;
-
-        return userDTO;
+    @Override
+    public Optional<Token> getToken( String tokenId ) {
+        return authService.getToken( tokenId );
     }
-
-    public static Token toTokenDTO( Token token ) {
-        final Token tokenDTO = new Token();
-        tokenDTO.id = token.id;
-        tokenDTO.created = token.created;
-        tokenDTO.user = toUserDTO( token.user );
-
-        return tokenDTO;
-    }
-
 }
