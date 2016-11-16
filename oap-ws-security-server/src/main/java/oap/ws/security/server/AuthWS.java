@@ -25,10 +25,10 @@
 package oap.ws.security.server;
 
 import lombok.extern.slf4j.Slf4j;
-import oap.http.HttpResponse;
+
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
-import oap.ws.security.Converters;
+
 import oap.ws.security.Token;
 
 import java.util.Optional;
@@ -41,15 +41,13 @@ public class AuthWS {
 
     private final AuthService authService;
 
-    public AuthWS( AuthService authService ) {
+    public AuthWS(AuthService authService) {
         this.authService = authService;
     }
 
-    @WsMethod( method = GET, path = "/{tokenId}" )
-    public HttpResponse getToken( @WsParam( from = PATH ) String tokenId ) {
-        final Optional<Token> tokenOptional = authService.getToken( tokenId );
-
-        return tokenOptional.isPresent() ? HttpResponse.ok( Converters.toTokenDTO( tokenOptional.get() ) )
-                : HttpResponse.NOT_FOUND;
+    @WsMethod(method = GET, path = "/{tokenId}")
+    public Optional<Token> getToken(@WsParam(from = PATH) String tokenId) {
+        return authService.getToken(tokenId);
     }
+
 }

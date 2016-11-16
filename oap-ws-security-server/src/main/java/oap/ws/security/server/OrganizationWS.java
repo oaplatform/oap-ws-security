@@ -25,7 +25,6 @@
 package oap.ws.security.server;
 
 import lombok.extern.slf4j.Slf4j;
-import oap.http.HttpResponse;
 import oap.util.Hash;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
@@ -34,199 +33,162 @@ import oap.ws.security.Converters;
 import oap.ws.security.Organization;
 import oap.ws.security.Role;
 import oap.ws.security.User;
+import oap.ws.validate.ValidationErrors;
+import oap.ws.validate.WsValidate;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import static java.lang.String.format;
+import static java.net.HttpURLConnection.HTTP_CONFLICT;
+import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
 import static oap.http.Request.HttpMethod.*;
 import static oap.ws.WsParam.From.*;
+import static oap.ws.security.Role.ADMIN;
+import static oap.ws.validate.ValidationErrors.empty;
+import static oap.ws.validate.ValidationErrors.error;
 
 @Slf4j
-public class OrganizationWS {
+public class OrganizationWS implements OrganizationWSI {
 
     private final OrganizationStorage organizationStorage;
     private final UserStorage userStorage;
     private final String salt;
 
-    public OrganizationWS( OrganizationStorage organizationStorage, UserStorage userStorage, String salt ) {
+    public OrganizationWS(OrganizationStorage organizationStorage, UserStorage userStorage, String salt ) {
         this.organizationStorage = organizationStorage;
         this.userStorage = userStorage;
         this.salt = salt;
     }
 
     @WsMethod( method = POST, path = "/store" )
-    @WsSecurity( role = Role.ADMIN )
-    public HttpResponse store( @WsParam( from = BODY ) Organization organization ) {
+    @WsSecurity( role = ADMIN )
+    @Override
+    public Organization store( @WsParam( from = BODY ) Organization organization ) {
         log.debug( "Storing organization: [{}]", organization );
 
         organizationStorage.store( organization );
 
-        final HttpResponse httpResponse = HttpResponse.ok( organization );
-        httpResponse.code = 201;
-
-        return httpResponse;
+        return organization;
     }
 
-    @WsMethod( method = GET, path = "/{oid}" )
+    @WsMethod( method = GET, path = "/all" )
+    @WsSecurity( role = ADMIN )
+    @Override
+    public List<Organization> getAllOrganizations() {
+        log.debug( "Fetching all organizations");
+
+        return organizationStorage.select().collect( Collectors.toList() );
+    }
+
+    @WsMethod( method = GET, path = "/{organizationId}" )
     @WsSecurity( role = Role.USER )
-    public HttpResponse getOrganization( @WsParam( from = PATH ) String oid,
-                                         @WsParam( from = SESSION ) User user ) {
-        if( user.role.equals( Role.ADMIN ) || user.organizationId.equals( oid ) ) {
-            final Optional<Organization> organizationOptional = organizationStorage.get( oid );
-            if( organizationOptional.isPresent() ) {
-                return HttpResponse.ok( organizationOptional.get() );
-            } else {
-                final HttpResponse httpResponse = HttpResponse.status( 404, "Organization " + oid + " not found" );
-
-                log.warn( httpResponse.toString() );
-
-                return httpResponse;
-            }
-        } else {
-            final HttpResponse httpResponse = HttpResponse.status( 403, "User " + user.email + " has no access " +
-                "to requested organization " + oid );
-
-            log.warn( httpResponse.toString() );
-
-            return httpResponse;
-        }
+    @WsValidate({"validateOrganizationAccess"})
+    @Override
+    public Optional<Organization> getOrganization( @WsParam( from = PATH ) String organizationId,
+                                                   @WsParam( from = SESSION ) User user ) {
+        return organizationStorage.get( organizationId );
     }
 
-    @WsMethod( method = DELETE, path = "/remove/{oid}" )
-    @WsSecurity( role = Role.ADMIN )
-    public void removeOrganization( @WsParam( from = PATH ) String oid ) {
-        organizationStorage.delete( oid );
+    @WsMethod( method = DELETE, path = "/{organizationId}" )
+    @WsSecurity( role = ADMIN )
+    @Override
+    public void removeOrganization( @WsParam( from = PATH ) String organizationId ) {
+        organizationStorage.delete( organizationId );
 
-        log.debug( "Organization [{}] deleted", oid );
+        log.debug( "Organization [{}] deleted", organizationId );
     }
 
-    @WsMethod( method = POST, path = "/{oid}/store-user" )
+    @WsMethod( method = GET, path = "/users" )
+    @WsSecurity( role = ADMIN )
+    @Override
+    public List<User> getAllUsers() {
+        log.debug( "Fetching all users" );
+
+        return userStorage.select().collect( Collectors.toList() );
+    }
+
+    @WsMethod( method = POST, path = "/{organizationId}/store-user" )
     @WsSecurity( role = Role.USER )
-    public HttpResponse storeUser( @WsParam( from = BODY ) User storeUser, @WsParam( from = PATH ) String oid,
-                                   @WsParam( from = SESSION ) User user ) {
-
-        if( !organizationStorage.get( oid ).isPresent() ) {
-            final HttpResponse httpResponse = HttpResponse.status( 404, "Organization " + oid + " doesn't exists" );
-
-            log.warn( httpResponse.toString() );
-
-            return httpResponse;
-        }
-
-        if( !storeUser.organizationId.equals( oid ) ) {
-            final HttpResponse httpResponse = HttpResponse.status( 409, "Cannot save user " + storeUser.email +
-                " with organization " + storeUser.organizationId + " to organization " + oid );
-
-            log.warn( httpResponse.toString() );
-
-            return httpResponse;
-        }
-
-        final Optional<User> existingUser = userStorage.get( storeUser.email );
-        if( existingUser.isPresent() && !existingUser.get().organizationId.equals( oid ) ) {
-            final HttpResponse httpResponse = HttpResponse.status( 409, "User " + storeUser.email +
-                " is already present in another " + "organization" );
-
-            log.warn( httpResponse.toString() );
-
-            return httpResponse;
-        }
-
-        if( !user.role.equals( Role.ADMIN ) && storeUser.role.precedence < user.role.precedence ) {
-            final HttpResponse httpResponse = HttpResponse.status( 403, "User with role " + user.role +
-                " can't grant role " + storeUser.role + " to user " + storeUser.email );
-
-            log.warn( httpResponse.toString() );
-
-            return httpResponse;
-        }
-
-        if( !user.role.equals( Role.ADMIN ) && !user.organizationId.equals( storeUser.organizationId ) ) {
-            final HttpResponse httpResponse = HttpResponse.status( 403, "User " + user.email + " cannot operate on " +
-                "users from different organization " + oid );
-
-            log.warn( httpResponse.toString() );
-
-            return httpResponse;
-        }
-
-        if( user.role.equals( Role.USER ) && !user.email.equals( storeUser.email ) ) {
-            final HttpResponse httpResponse = HttpResponse.status( 403, "User " + user.email + " doesn't have rights " +
-                "to create new users" );
-
-            log.warn( httpResponse.toString() );
-
-            return httpResponse;
-        }
+    @WsValidate({"validateOrganizationAccess","validateUserUniqueness","validateUserPrecedence","validateUserCreationRole"})
+    @Override
+    public User storeUser( @WsParam( from = BODY ) User storeUser, @WsParam( from = PATH ) String organizationId,
+                           @WsParam( from = SESSION ) User user ) {
 
         storeUser.password = Hash.sha256( salt, storeUser.password );
         userStorage.store( storeUser );
 
         log.debug( "New information about user " + storeUser.email + " was successfully added" );
 
-        final HttpResponse httpResponse = HttpResponse.ok( Converters.toUserDTO( storeUser ) );
-        httpResponse.code = 201;
-
-        return httpResponse;
+        return Converters.toUserDTO( storeUser );
     }
 
-    @WsMethod( method = GET, path = "/user/{email}" )
+    @WsMethod( method = GET, path = "/{organizatinoId}/user/{email}" )
     @WsSecurity( role = Role.USER )
-    public HttpResponse getUser( @WsParam( from = PATH ) String email,
-                                 @WsParam( from = SESSION ) User user ) {
-        final Optional<User> userOptional = userStorage.get( email );
-        if( userOptional.isPresent() ) {
-            final User fetchedUser = userOptional.get();
-
-            if( user.role.equals( Role.ADMIN ) || fetchedUser.organizationId.equals( user.organizationId ) ) {
-                final HttpResponse httpResponse = HttpResponse.ok( Converters.toUserDTO( fetchedUser ) );
-                log.debug( httpResponse.toString() );
-
-                return httpResponse;
-            } else {
-                final HttpResponse httpResponse = HttpResponse.status( 403, "User " + user.email + " cannot view " +
-                    "users from different organization" );
-
-                log.debug( httpResponse.toString() );
-
-                return httpResponse;
-            }
-        } else {
-            final HttpResponse httpResponse = HttpResponse.status( 404, "User " + email + " not found" );
-
-            log.warn( httpResponse.toString() );
-
-            return httpResponse;
-        }
-
+    @WsValidate({"validateOrganizationAccess", "validateUserAccessById"})
+    @Override
+    public Optional<User> getUser( @WsParam(from = PATH) String organizatinoId,
+                                   @WsParam( from = PATH ) String email,
+                                   @WsParam( from = SESSION ) User user ) {
+        return userStorage.get( email );
     }
 
-    @WsMethod( method = DELETE, path = "/{oid}/remove-user/{email}" )
+    @WsMethod( method = DELETE, path = "/{organizationId}/remove-user/{email}" )
     @WsSecurity( role = Role.ORGANIZATION_ADMIN )
-    public HttpResponse removeUser( @WsParam( from = PATH ) String oid,
-                                    @WsParam( from = PATH ) String email,
-                                    @WsParam( from = SESSION ) User user ) {
-        if( organizationStorage.get( oid ).isPresent() ) {
-            if( user.role.equals( Role.ADMIN ) || user.organizationId.equals( oid ) ) {
-                userStorage.delete( email );
+    @WsValidate({"validateOrganizationAccess","validateUserAccessById"})
+    @Override
+    public void removeUser( @WsParam( from = PATH ) String organizationId, @WsParam( from = PATH ) String email,
+                            @WsParam( from = SESSION ) User user ) {
+        userStorage.delete( email );
 
-                log.debug( "User [{}] deleted", email );
-
-                return HttpResponse.NO_CONTENT;
-            } else {
-
-                final HttpResponse httpResponse = HttpResponse.status( 403, "User " + email + "cannot perform " +
-                    "deletion on foreign organization" );
-
-                log.warn( httpResponse.toString() );
-                return httpResponse;
-            }
-        } else {
-            final HttpResponse httpResponse = HttpResponse.status( 404, "User " + email + "cannot perform deletion " +
-                "on foreign organization" );
-
-            log.warn( httpResponse.toString() );
-
-            return httpResponse;
-        }
+        log.debug( "User [{}] deleted", email );
     }
+
+    @SuppressWarnings( "unused" )
+    public ValidationErrors validateOrganizationAccess( String organizationId, User user) {
+        return user.role == ADMIN || Objects.equals( user.organizationId, organizationId )
+                ? ValidationErrors.empty()
+                : ValidationErrors.error( HTTP_FORBIDDEN, format( "User [%s] has no access to organization [%s]",
+                user.email, organizationId ) );
+    }
+
+    @SuppressWarnings( "unused" )
+    public ValidationErrors validateUserAccess( String organizationId, User storeUser) {
+        return validateUserAccessById(organizationId, storeUser.email);
+    }
+
+    @SuppressWarnings( "unused" )
+    public ValidationErrors validateUserAccessById( String organizationId, String email) {
+        return userStorage.get( email )
+                .map( user -> !Objects.equals( user.organizationId, organizationId )
+                        ? error( HTTP_FORBIDDEN, format("User [%s] has no access to organization", email ) )
+                        : empty() )
+                .orElse( empty() );
+    }
+
+    @SuppressWarnings( "unused" )
+    public ValidationErrors validateUserUniqueness( User storeUser) {
+        return userStorage.get(storeUser.email)
+                .map(savedUser -> !Objects.equals(storeUser.organizationId, savedUser.organizationId)
+                        ? error( HTTP_CONFLICT, format("User [%s] is already taken", storeUser.email ) )
+                        : ValidationErrors.empty()
+                ).orElse(ValidationErrors.empty());
+    }
+
+    @SuppressWarnings( "unused" )
+    public ValidationErrors validateUserPrecedence( User user, User storeUser) {
+        return ( !user.role.equals( ADMIN ) && storeUser.role.precedence < user.role.precedence )
+                ? ValidationErrors.error(HTTP_FORBIDDEN, format("User [%s] doesn't have enough permissions", user.email))
+                : ValidationErrors.empty();
+    }
+
+    @SuppressWarnings( "unused" )
+    public ValidationErrors validateUserCreationRole( User user, User storeUser) {
+        return (user.role.equals( Role.USER ) && !user.email.equals( storeUser.email ) )
+                ? ValidationErrors.error(HTTP_FORBIDDEN, format("User [%s] doesn't have enough permissions", user.email))
+                : ValidationErrors.empty();
+    }
+
 }

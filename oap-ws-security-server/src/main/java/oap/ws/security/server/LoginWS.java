@@ -34,6 +34,7 @@ import org.joda.time.DateTime;
 
 import java.util.Optional;
 
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static oap.http.Request.HttpMethod.GET;
 import static oap.ws.WsParam.From.QUERY;
 
@@ -51,7 +52,7 @@ public class LoginWS {
     }
 
     @WsMethod( method = GET, path = "/" )
-    public HttpResponse login( @WsParam( from = QUERY ) String email, @WsParam( from = QUERY ) String password ) {
+    public HttpResponse login( @WsParam( from = QUERY ) String email, @WsParam( from = QUERY )String password ) {
         final Optional<Token> optionalToken = authService.generateToken( email, password );
 
         if( optionalToken.isPresent() ) {
@@ -65,11 +66,7 @@ public class LoginWS {
                     .build()
                 );
         } else {
-            final HttpResponse httpResponse = HttpResponse.status( 400, "Username or password is invalid" );
-
-            log.debug( httpResponse.reasonPhrase );
-
-            return httpResponse;
+            return HttpResponse.status( HTTP_UNAUTHORIZED, "Username or password is invalid" );
         }
     }
 
