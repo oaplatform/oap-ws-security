@@ -6,8 +6,6 @@
 
 package oap.ws.security;
 
-import oap.ws.security.OrganizationAware;
-import oap.ws.security.User;
 import oap.ws.validate.ValidationErrors;
 
 import java.util.Objects;
@@ -23,12 +21,12 @@ public interface OrganizationAwareWS {
     default ValidationErrors validateOrganizationAccess( User user, String organization ) {
         return user.role == ADMIN || Objects.equals( user.organizationId, organization )
                 ? empty()
-                : ValidationErrors.error( HTTP_FORBIDDEN, "Forbidden" );
+                : error( HTTP_FORBIDDEN, "Forbidden" );
     }
 
-    default ValidationErrors validateObjectAccess( Optional<OrganizationAware> object, String organization ) {
+    default ValidationErrors validateObjectAccess( Optional<? extends OrganizationAware> object, String organization ) {
         return object.map( oa -> !Objects.equals( oa.organization(), organization )
-                ? ValidationErrors.error( HTTP_FORBIDDEN, "Forbidden" )
+                ? error( HTTP_FORBIDDEN, "Forbidden" )
                 : empty() )
                 .orElse( empty() );
     }
