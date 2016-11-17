@@ -161,7 +161,7 @@ public class OrganizationWSTest {
       final User userUpdate = new User(Role.USER, "98765", "test@example.com");
 
       validating(OrganizationWSI.class)
-              .isError(409, "User [test@example.com] is already taken")
+              .isError(403, "User [test@example.com] has no access to organization")
               .forInstance(organizationWS)
               .storeUser( userUpdate, "98765", user );
    }

@@ -112,7 +112,7 @@ public class OrganizationWS implements OrganizationWSI {
 
     @WsMethod( method = POST, path = "/{organizationId}/store" )
     @WsSecurity( role = Role.USER )
-    @WsValidate({"validateOrganizationAccess","validateUserUniqueness","validateUserPrecedence","validateUserCreationRole"})
+    @WsValidate({"validateOrganizationAccess","validateUserAccess","validateUserPrecedence","validateUserCreationRole"})
     @Override
     public User storeUser( @WsParam( from = BODY ) User storeUser, @WsParam( from = PATH ) String organizationId,
                            @WsParam( from = SESSION ) User user ) {
@@ -166,15 +166,6 @@ public class OrganizationWS implements OrganizationWSI {
                         ? error( HTTP_FORBIDDEN, format("User [%s] has no access to organization", email ) )
                         : empty() )
                 .orElse( empty() );
-    }
-
-    @SuppressWarnings( "unused" )
-    public ValidationErrors validateUserUniqueness( User storeUser) {
-        return userStorage.get(storeUser.email)
-                .map(savedUser -> !Objects.equals(storeUser.organizationId, savedUser.organizationId)
-                        ? error( HTTP_CONFLICT, format("User [%s] is already taken", storeUser.email ) )
-                        : ValidationErrors.empty()
-                ).orElse(ValidationErrors.empty());
     }
 
     @SuppressWarnings( "unused" )
