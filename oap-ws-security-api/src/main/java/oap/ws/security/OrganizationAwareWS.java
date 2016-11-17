@@ -18,14 +18,14 @@ import static oap.ws.validate.ValidationErrors.error;
 
 public interface OrganizationAwareWS {
     @SuppressWarnings( "unused" )
-    default ValidationErrors validateOrganizationAccess( User user, String organization ) {
-        return user.role == ADMIN || Objects.equals( user.organizationId, organization )
+    default ValidationErrors validateOrganizationAccess( User user, String organizationId ) {
+        return user.role == ADMIN || Objects.equals( user.organizationId, organizationId )
                 ? empty()
                 : error( HTTP_FORBIDDEN, "Forbidden" );
     }
 
-    default ValidationErrors validateObjectAccess( Optional<? extends OrganizationAware> object, String organization ) {
-        return object.map( oa -> !Objects.equals( oa.organization(), organization )
+    default ValidationErrors validateObjectAccess( Optional<? extends OrganizationAware> object, String organizationId ) {
+        return object.map( oa -> !Objects.equals( oa.organization(), organizationId )
                 ? error( HTTP_FORBIDDEN, "Forbidden" )
                 : empty() )
                 .orElse( empty() );
