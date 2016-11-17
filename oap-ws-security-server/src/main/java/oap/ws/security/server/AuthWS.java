@@ -47,7 +47,7 @@ public class AuthWS {
 
     @WsMethod(method = GET, path = "/{tokenId}")
     public Optional<Token> getToken(@WsParam(from = PATH) String tokenId) {
-        return authService.getToken(tokenId);
+        return authService.getToken(tokenId).map( Converters::toTokenDTO );
     }
 
 }

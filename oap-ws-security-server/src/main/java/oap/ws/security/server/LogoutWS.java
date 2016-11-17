@@ -5,7 +5,7 @@ import oap.ws.WsMethod;
 import oap.ws.WsParam;
 import oap.ws.security.Role;
 import oap.ws.security.User;
-import oap.ws.security.client.WsSecurity;
+import oap.ws.security.WsSecurity;
 import oap.ws.validate.ValidationErrors;
 import oap.ws.validate.WsValidate;
 
