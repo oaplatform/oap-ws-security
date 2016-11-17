@@ -83,7 +83,6 @@
                     <disableXmlReport>false</disableXmlReport>
                     <printSummary>true</printSummary>
                     <forkedProcessTimeoutInSeconds>4800</forkedProcessTimeoutInSeconds>
-                    `
                     <useSystemClassLoader>false</useSystemClassLoader>
                     <runOrder>balanced</runOrder>
                     <includes>
