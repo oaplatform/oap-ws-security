@@ -28,20 +28,15 @@ import lombok.extern.slf4j.Slf4j;
 import oap.util.Hash;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
-import oap.ws.security.WsSecurity;
-import oap.ws.security.Organization;
-import oap.ws.security.Role;
-import oap.ws.security.User;
+import oap.ws.security.*;
 import oap.ws.validate.ValidationErrors;
 import oap.ws.validate.WsValidate;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static java.net.HttpURLConnection.HTTP_CONFLICT;
 import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
 import static oap.http.Request.HttpMethod.*;
 import static oap.ws.WsParam.From.*;
@@ -50,7 +45,7 @@ import static oap.ws.validate.ValidationErrors.empty;
 import static oap.ws.validate.ValidationErrors.error;
 
 @Slf4j
-public class OrganizationWS implements OrganizationWSI {
+public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
 
     private final OrganizationStorage organizationStorage;
     private final UserStorage userStorage;
@@ -143,14 +138,6 @@ public class OrganizationWS implements OrganizationWSI {
         userStorage.delete( email );
 
         log.debug( "User [{}] deleted", email );
-    }
-
-    @SuppressWarnings( "unused" )
-    public ValidationErrors validateOrganizationAccess( String organizationId, User user) {
-        return user.role == ADMIN || Objects.equals( user.organizationId, organizationId )
-                ? ValidationErrors.empty()
-                : ValidationErrors.error( HTTP_FORBIDDEN, format( "User [%s] has no access to organization [%s]",
-                user.email, organizationId ) );
     }
 
     @SuppressWarnings( "unused" )
