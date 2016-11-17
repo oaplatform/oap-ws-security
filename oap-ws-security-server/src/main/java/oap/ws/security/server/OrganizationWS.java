@@ -99,7 +99,10 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
     public List<User> getAllUsers( @WsParam( from = PATH ) String organizationId ) {
         log.debug( "Fetching all users for organization [{}]", organizationId );
 
-        return userStorage.select().filter( user -> user.organizationId.equals( organizationId ) ).toList();
+        return userStorage.select()
+                .filter( user -> user.organizationId.equals( organizationId ) )
+                .map( Converters::toUserDTO )
+                .toList();
     }
 
     @WsMethod( method = POST, path = "/{organizationId}/store" )
@@ -124,7 +127,7 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
     public Optional<User> getUser( @WsParam( from = PATH ) String organizatinoId,
                                    @WsParam( from = PATH ) String email,
                                    @WsParam( from = SESSION ) User user ) {
-        return userStorage.get( email );
+        return userStorage.get( email ).map( Converters::toUserDTO );
     }
 
     @WsMethod( method = DELETE, path = "/{organizationId}/users/{email}/delete" )
