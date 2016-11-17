@@ -28,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 import oap.http.HttpResponse;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
-import oap.ws.security.Converters;
 import oap.ws.security.Token;
 import org.joda.time.DateTime;
 

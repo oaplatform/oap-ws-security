@@ -22,18 +22,33 @@
  * SOFTWARE.
  */
 
-package oap.ws.security.client;
+package oap.ws.security.server;
 
-import oap.ws.security.Role;
+import oap.ws.security.Token;
+import oap.ws.security.User;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public final class Converters {
 
-@Target( ElementType.METHOD )
-@Retention( RetentionPolicy.RUNTIME )
-public @interface WsSecurity {
+    private Converters() {
+    }
 
-   Role role();
+    public static User toUserDTO( User user ) {
+        final User userDTO = new User();
+        userDTO.email = user.email;
+        userDTO.role = user.role;
+        userDTO.organizationId = user.organizationId;
+        userDTO.organizationName = user.organizationName;
+
+        return userDTO;
+    }
+
+    public static Token toTokenDTO( Token token ) {
+        final Token tokenDTO = new Token();
+        tokenDTO.id = token.id;
+        tokenDTO.created = token.created;
+        tokenDTO.user = toUserDTO( token.user );
+
+        return tokenDTO;
+    }
+
 }

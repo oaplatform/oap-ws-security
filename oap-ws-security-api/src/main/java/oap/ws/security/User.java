@@ -31,7 +31,7 @@ import java.io.Serializable;
 
 @ToString
 @EqualsAndHashCode
-public class User implements Serializable {
+public class User implements OrganizationAware, Serializable {
 
     private static final long serialVersionUID = -999111284666144557L;
 
@@ -48,5 +48,10 @@ public class User implements Serializable {
         this.role = role;
         this.organizationId = organizationId;
         this.email = email;
+    }
+
+    @Override
+    public String organization() {
+        return organizationId;
     }
 }

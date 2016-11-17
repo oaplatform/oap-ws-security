@@ -16,24 +16,13 @@
         <dependency>
             <groupId>oap-ws-security</groupId>
             <artifactId>oap-ws-security-api</artifactId>
-            <version>1.7.2</version>
-        </dependency>
-        <dependency>
-            <groupId>oap-ws-security</groupId>
-            <artifactId>oap-ws-security-client</artifactId>
-            <version>1.7.2</version>
+            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>oap</groupId>
             <artifactId>oap-ws</artifactId>
             <version>${oap.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>oap-ws-security</groupId>
-                    <artifactId>oap-ws-security-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+         </dependency>
         <dependency>
             <groupId>oap</groupId>
             <artifactId>oap-remoting-server</artifactId>
