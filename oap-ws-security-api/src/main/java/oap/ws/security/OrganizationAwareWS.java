@@ -24,7 +24,7 @@ public interface OrganizationAwareWS {
                 : error( HTTP_FORBIDDEN, "Forbidden" );
     }
 
-    default ValidationErrors validateObjectAccess( Optional<? extends OrganizationAware> object, String organizationId ) {
+    static ValidationErrors validateObjectAccess( Optional<? extends OrganizationAware> object, String organizationId ) {
         return object.map( oa -> !Objects.equals( oa.organization(), organizationId )
                 ? error( HTTP_FORBIDDEN, "Forbidden" )
                 : empty() )
