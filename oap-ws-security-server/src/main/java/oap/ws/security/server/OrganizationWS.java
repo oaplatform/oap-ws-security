@@ -41,8 +41,6 @@ import static java.net.HttpURLConnection.HTTP_FORBIDDEN;
 import static oap.http.Request.HttpMethod.*;
 import static oap.ws.WsParam.From.*;
 import static oap.ws.security.Role.ADMIN;
-import static oap.ws.validate.ValidationErrors.empty;
-import static oap.ws.validate.ValidationErrors.error;
 
 @Slf4j
 public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
@@ -51,7 +49,7 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
     private final UserStorage userStorage;
     private final String salt;
 
-    public OrganizationWS(OrganizationStorage organizationStorage, UserStorage userStorage, String salt ) {
+    public OrganizationWS( OrganizationStorage organizationStorage, UserStorage userStorage, String salt ) {
         this.organizationStorage = organizationStorage;
         this.userStorage = userStorage;
         this.salt = salt;
@@ -72,14 +70,14 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
     @WsSecurity( role = ADMIN )
     @Override
     public List<Organization> getAllOrganizations() {
-        log.debug( "Fetching all organizations");
+        log.debug( "Fetching all organizations" );
 
         return organizationStorage.select().toList();
     }
 
     @WsMethod( method = GET, path = "/{organizationId}" )
     @WsSecurity( role = Role.USER )
-    @WsValidate({"validateOrganizationAccess"})
+    @WsValidate( { "validateOrganizationAccess" } )
     @Override
     public Optional<Organization> getOrganization( @WsParam( from = PATH ) String organizationId,
                                                    @WsParam( from = SESSION ) User user ) {
@@ -98,15 +96,15 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
     @WsMethod( method = GET, path = "/{organizationId}/users" )
     @WsSecurity( role = ADMIN )
     @Override
-    public List<User> getAllUsers(@WsParam (from = PATH) String organizationId) {
-        log.debug( "Fetching all users for organization [{}]",  organizationId);
+    public List<User> getAllUsers( @WsParam( from = PATH ) String organizationId ) {
+        log.debug( "Fetching all users for organization [{}]", organizationId );
 
-        return userStorage.select().filter(user -> user.organizationId.equals(organizationId)).toList();
+        return userStorage.select().filter( user -> user.organizationId.equals( organizationId ) ).toList();
     }
 
     @WsMethod( method = POST, path = "/{organizationId}/store" )
     @WsSecurity( role = Role.USER )
-    @WsValidate({"validateOrganizationAccess","validateUserAccess","validateUserPrecedence","validateUserCreationRole"})
+    @WsValidate( { "validateOrganizationAccess", "validateUserAccess", "validateUserPrecedence", "validateUserCreationRole" } )
     @Override
     public User storeUser( @WsParam( from = BODY ) User storeUser, @WsParam( from = PATH ) String organizationId,
                            @WsParam( from = SESSION ) User user ) {
@@ -121,9 +119,9 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
 
     @WsMethod( method = GET, path = "/{organizationId}/users/{email}" )
     @WsSecurity( role = Role.USER )
-    @WsValidate({"validateOrganizationAccess", "validateUserAccessById"})
+    @WsValidate( { "validateOrganizationAccess", "validateUserAccessById" } )
     @Override
-    public Optional<User> getUser( @WsParam(from = PATH) String organizatinoId,
+    public Optional<User> getUser( @WsParam( from = PATH ) String organizatinoId,
                                    @WsParam( from = PATH ) String email,
                                    @WsParam( from = SESSION ) User user ) {
         return userStorage.get( email );
@@ -131,7 +129,7 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
 
     @WsMethod( method = DELETE, path = "/{organizationId}/users/{email}/delete" )
     @WsSecurity( role = Role.ORGANIZATION_ADMIN )
-    @WsValidate({"validateOrganizationAccess","validateUserAccessById"})
+    @WsValidate( { "validateOrganizationAccess", "validateUserAccessById" } )
     @Override
     public void removeUser( @WsParam( from = PATH ) String organizationId, @WsParam( from = PATH ) String email,
                             @WsParam( from = SESSION ) User user ) {
@@ -146,26 +144,20 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
     }
 
     @SuppressWarnings( "unused" )
-    public ValidationErrors validateUserAccessById( String organizationId, String email) {
-        return userStorage.get( email )
-                .map( user -> !Objects.equals( user.organizationId, organizationId )
-                        ? error( HTTP_FORBIDDEN, format("User [%s] has no access to organization", email ) )
-                        : empty() )
-                .orElse( empty() );
+    public ValidationErrors validateUserAccessById( String organizationId, String email ) {
+        return OrganizationAwareWS.validateObjectAccess( userStorage.get( email ), organizationId );
     }
 
     @SuppressWarnings( "unused" )
-    public ValidationErrors validateUserPrecedence( User user, User storeUser) {
+    public ValidationErrors validateUserPrecedence( User user, User storeUser ) {
         return ( user.role != Role.ADMIN && storeUser.role.precedence < user.role.precedence )
-                ? ValidationErrors.error(HTTP_FORBIDDEN, format("User [%s] doesn't have enough permissions", user.email))
-                : ValidationErrors.empty();
+                ? ValidationErrors.error( HTTP_FORBIDDEN, "Forbidden" ) : ValidationErrors.empty();
     }
 
     @SuppressWarnings( "unused" )
-    public ValidationErrors validateUserCreationRole( User user, User storeUser) {
-        return (user.role == Role.USER && !user.email.equals( storeUser.email ) )
-                ? ValidationErrors.error(HTTP_FORBIDDEN, format("User [%s] doesn't have enough permissions", user.email))
-                : ValidationErrors.empty();
+    public ValidationErrors validateUserCreationRole( User user, User storeUser ) {
+        return ( user.role == Role.USER && !user.email.equals( storeUser.email ) )
+                ? ValidationErrors.error( HTTP_FORBIDDEN, "Forbidden" ) : ValidationErrors.empty();
     }
 
 }

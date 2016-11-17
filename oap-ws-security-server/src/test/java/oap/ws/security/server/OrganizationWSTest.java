@@ -120,7 +120,7 @@ public class OrganizationWSTest {
       final User userUpdate = new User(Role.USER, "98765", "test-2@example.com");
 
       validating(OrganizationWSI.class)
-              .isError(403, "User [test@example.com] has no access to organization [98765]")
+              .isError(403, "Forbidden")
               .forInstance(organizationWS)
               .storeUser( userUpdate, "98765", user );
    }
@@ -138,7 +138,7 @@ public class OrganizationWSTest {
       final User userUpdate = new User(Role.USER,"98765", "test-2@example.com");
 
       validating(OrganizationWSI.class)
-              .isError(403, "User [test@example.com] has no access to organization [98765]")
+              .isError(403, "Forbidden")
               .forInstance(organizationWS)
               .storeUser( userUpdate, "98765", user );
    }
@@ -161,7 +161,7 @@ public class OrganizationWSTest {
       final User userUpdate = new User(Role.USER, "98765", "test@example.com");
 
       validating(OrganizationWSI.class)
-              .isError(403, "User [test@example.com] has no access to organization")
+              .isError(403, "Forbidden")
               .forInstance(organizationWS)
               .storeUser( userUpdate, "98765", user );
    }
@@ -196,7 +196,7 @@ public class OrganizationWSTest {
       final User sessionUser = new User(Role.ORGANIZATION_ADMIN, "12345", "sessionUser@test.com");
 
       validating(OrganizationWSI.class)
-              .isError(403, "User [sessionUser@test.com] doesn't have enough permissions")
+              .isError(403, "Forbidden")
               .forInstance(organizationWS)
               .storeUser( user, "12345", sessionUser );
    }
@@ -214,7 +214,7 @@ public class OrganizationWSTest {
       final User sessionUser = new User(Role.ORGANIZATION_ADMIN, "98765", "org-admin@example.com");
 
       validating(OrganizationWSI.class)
-              .isError(403, "User [org-admin@example.com] has no access to organization [12345]")
+              .isError(403, "Forbidden")
               .forInstance(organizationWS)
               .storeUser( user, "12345", sessionUser );
    }
