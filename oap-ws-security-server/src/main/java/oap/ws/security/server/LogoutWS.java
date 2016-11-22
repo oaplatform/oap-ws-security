@@ -4,9 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import oap.http.HttpResponse;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
-import oap.ws.security.WsSecurity;
 import oap.ws.security.Role;
 import oap.ws.security.User;
+import oap.ws.security.WsSecurity;
 
 import java.util.Objects;
 

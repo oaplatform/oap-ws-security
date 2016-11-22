@@ -85,7 +85,7 @@ public class SecurityInterceptor implements Interceptor {
 
                 if( !optionalToken.isPresent() ) {
                     final HttpResponse httpResponse = HttpResponse.status( 401, format( "Token id [%s] expired or was " +
-                            "not created", sessionToken ) );
+                        "not created", sessionToken ) );
 
                     log.debug( httpResponse.toString() );
 

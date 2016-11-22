@@ -24,7 +24,11 @@
 
 package oap.ws.security;
 
-import oap.http.*;
+import oap.http.Context;
+import oap.http.HttpResponse;
+import oap.http.Protocol;
+import oap.http.Request;
+import oap.http.Session;
 import oap.reflect.Reflect;
 import oap.reflect.Reflection;
 import org.apache.http.HttpRequest;
@@ -44,7 +48,7 @@ import static org.testng.Assert.assertNotNull;
 
 public class SecurityInterceptorTest {
 
-    private static final Reflection REFLECTION = Reflect.reflect(TestAPI.class );
+    private static final Reflection REFLECTION = Reflect.reflect( TestAPI.class );
 
     private final TokenService mockTokenService = mock( TokenService.class );
 
@@ -55,7 +59,7 @@ public class SecurityInterceptorTest {
         final Reflection.Method methodWithAnnotation = REFLECTION.method(
             method -> method.name().equals( "methodWithoutAnnotation" ) ).get();
 
-        final Optional<HttpResponse> httpResponse = securityInterceptor.intercept( null, null, methodWithAnnotation);
+        final Optional<HttpResponse> httpResponse = securityInterceptor.intercept( null, null, methodWithAnnotation );
 
         assertFalse( httpResponse.isPresent() );
     }
@@ -72,7 +76,7 @@ public class SecurityInterceptorTest {
         session.set( "user", user );
 
         final Optional<HttpResponse> httpResponse = securityInterceptor.intercept( null,
-            session, methodWithAnnotation);
+            session, methodWithAnnotation );
 
         assertFalse( httpResponse.isPresent() );
     }
@@ -85,11 +89,11 @@ public class SecurityInterceptorTest {
         final Context context = new Context( "/", InetAddress.getLocalHost(), Protocol.HTTP.name() );
         final String tokenId = UUID.randomUUID().toString();
 
-        final HttpRequest httpRequest = new HttpGet(  );
+        final HttpRequest httpRequest = new HttpGet();
         httpRequest.setHeader( "Authorization", tokenId );
         httpRequest.setHeader( "Host", "localhost" );
 
-        final Request request = new Request(httpRequest ,context);
+        final Request request = new Request( httpRequest, context );
 
         final User user = new User();
         user.role = Role.ADMIN;
@@ -103,11 +107,11 @@ public class SecurityInterceptorTest {
         token.id = tokenId;
         token.created = DateTime.now();
 
-        when(mockTokenService.getToken( tokenId )).thenReturn( Optional.of(token) );
+        when( mockTokenService.getToken( tokenId ) ).thenReturn( Optional.of( token ) );
 
         final Session session = new Session();
         final Optional<HttpResponse> httpResponse = securityInterceptor.intercept( request,
-            session, methodWithAnnotation);
+            session, methodWithAnnotation );
 
         assertFalse( httpResponse.isPresent() );
         assertNotNull( session.get( "user" ) );

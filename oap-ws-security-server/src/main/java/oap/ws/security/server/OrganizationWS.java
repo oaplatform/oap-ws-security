@@ -29,15 +29,19 @@ import oap.http.HttpResponse;
 import oap.util.Hash;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
-import oap.ws.security.WsSecurity;
 import oap.ws.security.Organization;
 import oap.ws.security.Role;
 import oap.ws.security.User;
+import oap.ws.security.WsSecurity;
 
 import java.util.Optional;
 
-import static oap.http.Request.HttpMethod.*;
-import static oap.ws.WsParam.From.*;
+import static oap.http.Request.HttpMethod.DELETE;
+import static oap.http.Request.HttpMethod.GET;
+import static oap.http.Request.HttpMethod.POST;
+import static oap.ws.WsParam.From.BODY;
+import static oap.ws.WsParam.From.PATH;
+import static oap.ws.WsParam.From.SESSION;
 
 @Slf4j
 public class OrganizationWS {

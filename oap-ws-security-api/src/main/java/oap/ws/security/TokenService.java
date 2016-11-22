@@ -24,10 +24,8 @@
 
 package oap.ws.security;
 
-import oap.ws.security.Token;
-
 import java.util.Optional;
 
 public interface TokenService {
-    Optional<Token> getToken(String tokenId);
+    Optional<Token> getToken( String tokenId );
 }

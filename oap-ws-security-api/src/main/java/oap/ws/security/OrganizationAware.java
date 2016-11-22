@@ -7,5 +7,7 @@
 package oap.ws.security;
 
 public interface OrganizationAware {
-   String organization();
+    String organization();
+
+    boolean belongsToOrganization( String organizationId );
 }

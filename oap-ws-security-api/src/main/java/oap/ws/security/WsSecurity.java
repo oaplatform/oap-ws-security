@@ -24,8 +24,6 @@
 
 package oap.ws.security;
 
-import oap.ws.security.Role;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -35,5 +33,5 @@ import java.lang.annotation.Target;
 @Retention( RetentionPolicy.RUNTIME )
 public @interface WsSecurity {
 
-   Role role();
+    Role role();
 }

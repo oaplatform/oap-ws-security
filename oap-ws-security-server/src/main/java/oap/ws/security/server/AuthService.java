@@ -33,7 +33,12 @@ import oap.ws.security.Token;
 import oap.ws.security.User;
 import org.joda.time.DateTime;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
@@ -64,12 +69,12 @@ public class AuthService {
 
                 synchronized( this ) {
                     tokenStorage.asMap().forEach( ( s, token ) -> {
-                        if ( token.user.email.equals( user.email ) ) {
+                        if( token.user.email.equals( user.email ) ) {
                             tokens.add( token );
                         }
-                    });
+                    } );
 
-                    if ( tokens.isEmpty() ) {
+                    if( tokens.isEmpty() ) {
                         log.debug( "Generating new token for user [{}]...", user.email );
                         final Token token = new Token();
                         token.user = user;

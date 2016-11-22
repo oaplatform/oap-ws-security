@@ -33,16 +33,16 @@ import java.io.Serializable;
 @EqualsAndHashCode
 public class Organization implements Serializable {
 
-   private static final long serialVersionUID = -4541112846071445501L;
+    private static final long serialVersionUID = -4541112846071445501L;
 
-   public String id;
-   public String name;
-   public String description;
+    public String id;
+    public String name;
+    public String description;
 
-   public Organization() {
-   }
+    public Organization() {
+    }
 
-   public Organization( String id ) {
-      this.id = id;
-   }
+    public Organization( String id ) {
+        this.id = id;
+    }
 }

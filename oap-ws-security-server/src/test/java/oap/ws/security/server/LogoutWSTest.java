@@ -12,35 +12,35 @@ import static org.testng.Assert.assertNotNull;
 
 public class LogoutWSTest {
 
-   private static final String SALT = "test";
+    private static final String SALT = "test";
 
-   private UserStorage userStorage;
-   private AuthService authService;
+    private UserStorage userStorage;
+    private AuthService authService;
 
-   @BeforeClass
-   public void startServer() {
-      userStorage = new UserStorage( Env.tmpPath( "users" ) );
-      authService = new AuthService( userStorage, 1, SALT );
-   }
+    @BeforeClass
+    public void startServer() {
+        userStorage = new UserStorage( Env.tmpPath( "users" ) );
+        authService = new AuthService( userStorage, 1, SALT );
+    }
 
-   @Test
-   public void testShouldLogoutExistingUser() {
-      final User user = new User();
-      user.email = "test@example.com";
-      user.role = Role.ADMIN;
-      user.password = Hash.sha256( SALT, "12345" );
-      user.organizationId = "987654321";
-      user.organizationName = "test";
+    @Test
+    public void testShouldLogoutExistingUser() {
+        final User user = new User();
+        user.email = "test@example.com";
+        user.role = Role.ADMIN;
+        user.password = Hash.sha256( SALT, "12345" );
+        user.organizationId = "987654321";
+        user.organizationName = "test";
 
-      userStorage.store( user );
+        userStorage.store( user );
 
-      final String id = authService.generateToken( user.email, "12345" ).get().id;
+        final String id = authService.generateToken( user.email, "12345" ).get().id;
 
-      assertNotNull( id );
-      final LogoutWS loginWS = new LogoutWS( authService );
+        assertNotNull( id );
+        final LogoutWS loginWS = new LogoutWS( authService );
 
-      loginWS.logout( user.email, user );
+        loginWS.logout( user.email, user );
 
-      assertFalse( authService.getToken( id ).isPresent() );
-   }
+        assertFalse( authService.getToken( id ).isPresent() );
+    }
 }

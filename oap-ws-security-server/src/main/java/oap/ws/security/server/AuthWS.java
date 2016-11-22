@@ -49,6 +49,6 @@ public class AuthWS {
         final Optional<Token> tokenOptional = authService.getToken( tokenId );
 
         return tokenOptional.isPresent() ? HttpResponse.ok( Converters.toTokenDTO( tokenOptional.get() ) )
-                : HttpResponse.NOT_FOUND;
+            : HttpResponse.NOT_FOUND;
     }
 }

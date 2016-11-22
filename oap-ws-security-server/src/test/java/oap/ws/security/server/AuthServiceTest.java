@@ -34,57 +34,59 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 
 public class AuthServiceTest extends AbstractTest {
 
-   private AuthService authService;
-   private UserStorage userStorage;
+    private AuthService authService;
+    private UserStorage userStorage;
 
-   @BeforeTest
-   public void setUp() {
-      userStorage = new UserStorage( Env.tmpPath( "users" ) );
-      authService = new AuthService( userStorage, 1, "test" );
-   }
+    @BeforeTest
+    public void setUp() {
+        userStorage = new UserStorage( Env.tmpPath( "users" ) );
+        authService = new AuthService( userStorage, 1, "test" );
+    }
 
-   @AfterTest
-   public void tearDown() {
-      userStorage.clear();
-   }
+    @AfterTest
+    public void tearDown() {
+        userStorage.clear();
+    }
 
-   @Test
-   public void testShouldGenerateNewToken() {
-      final User user = new User();
-      user.email = "test@example.com";
-      user.password = Hash.sha256( "test", "12345" );
-      user.role = Role.ADMIN;
+    @Test
+    public void testShouldGenerateNewToken() {
+        final User user = new User();
+        user.email = "test@example.com";
+        user.password = Hash.sha256( "test", "12345" );
+        user.role = Role.ADMIN;
 
-      userStorage.store( user );
+        userStorage.store( user );
 
-      final Token token = authService.generateToken( user.email, "12345" ).get();
+        final Token token = authService.generateToken( user.email, "12345" ).get();
 
-      assertEquals( token.user.role, Role.ADMIN );
-      assertEquals( token.user.email, "test@example.com" );
-      assertNotNull( token.id );
-      assertNotNull( token.created );
-   }
+        assertEquals( token.user.role, Role.ADMIN );
+        assertEquals( token.user.email, "test@example.com" );
+        assertNotNull( token.id );
+        assertNotNull( token.created );
+    }
 
-   @Test
-   public void testShouldDeleteExpiredToken() throws InterruptedException {
-      final User user = new User();
-      user.email = "test@example.com";
-      user.password = Hash.sha256( "test", "12345" );
-      user.role = Role.ADMIN;
+    @Test
+    public void testShouldDeleteExpiredToken() throws InterruptedException {
+        final User user = new User();
+        user.email = "test@example.com";
+        user.password = Hash.sha256( "test", "12345" );
+        user.role = Role.ADMIN;
 
-      userStorage.store( user );
+        userStorage.store( user );
 
-      authService = new AuthService( userStorage, 0, "test" );
+        authService = new AuthService( userStorage, 0, "test" );
 
-      final String id = authService.generateToken( user.email, "12345" ).get().id;
-      assertNotNull( id );
+        final String id = authService.generateToken( user.email, "12345" ).get().id;
+        assertNotNull( id );
 
-      Thread.sleep( 100 );
+        Thread.sleep( 100 );
 
-      assertFalse( authService.getToken( id ).isPresent() );
-   }
+        assertFalse( authService.getToken( id ).isPresent() );
+    }
 }

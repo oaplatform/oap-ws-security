@@ -41,67 +41,69 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static oap.http.testng.HttpAsserts.*;
+import static oap.http.testng.HttpAsserts.HTTP_PREFIX;
+import static oap.http.testng.HttpAsserts.assertGet;
+import static oap.http.testng.HttpAsserts.reset;
 
 
 public class LoginWSTest {
 
-   private static final String SALT = "test";
+    private static final String SALT = "test";
 
-   private final Server server = new Server( 100 );
-   private final WebServices webServices = new WebServices( server, new SessionManager( 10, null, "/" ),
-      new GenericCorsPolicy( "*", "Authorization", true ),
-      WsConfig.CONFIGURATION.fromResource( getClass(), "ws-login.conf" ) );
+    private final Server server = new Server( 100 );
+    private final WebServices webServices = new WebServices( server, new SessionManager( 10, null, "/" ),
+        new GenericCorsPolicy( "*", "Authorization", true ),
+        WsConfig.CONFIGURATION.fromResource( getClass(), "ws-login.conf" ) );
 
-   private UserStorage userStorage;
-   private AuthService authService;
+    private UserStorage userStorage;
+    private AuthService authService;
 
-   private SynchronizedThread listener;
+    private SynchronizedThread listener;
 
-   @BeforeClass
-   public void startServer() {
-      userStorage = new UserStorage( Env.tmpPath( "users" ) );
-      authService = new AuthService( userStorage, 1, "test" );
+    @BeforeClass
+    public void startServer() {
+        userStorage = new UserStorage( Env.tmpPath( "users" ) );
+        authService = new AuthService( userStorage, 1, "test" );
 
-      Application.register( "ws-login", new LoginWS( authService, null, 10 ) );
+        Application.register( "ws-login", new LoginWS( authService, null, 10 ) );
 
-      webServices.start();
-      listener = new SynchronizedThread( new PlainHttpListener( server, Env.port() ) );
-      listener.start();
-   }
+        webServices.start();
+        listener = new SynchronizedThread( new PlainHttpListener( server, Env.port() ) );
+        listener.start();
+    }
 
-   @AfterClass
-   public void stopServer() {
-      listener.stop();
-      server.stop();
-      webServices.stop();
-      reset();
-   }
+    @AfterClass
+    public void stopServer() {
+        listener.stop();
+        server.stop();
+        webServices.stop();
+        reset();
+    }
 
-   @BeforeMethod
-   public void setUp() {
-      userStorage.clear();
-   }
+    @BeforeMethod
+    public void setUp() {
+        userStorage.clear();
+    }
 
-   @Test
-   public void testShouldNotLoginNonExistingUser() {
-      assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" ).hasCode( 400 ).hasBody( "" );
-   }
+    @Test
+    public void testShouldNotLoginNonExistingUser() {
+        assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" ).hasCode( 400 ).hasBody( "" );
+    }
 
-   @Test
-   public void testShouldLoginExistingUser() {
-      final User user = new User();
-      user.email = "test@example.com";
-      user.role = Role.ADMIN;
-      user.password = Hash.sha256( SALT, "12345" );
-      user.organizationId = "987654321";
-      user.organizationName = "test";
+    @Test
+    public void testShouldLoginExistingUser() {
+        final User user = new User();
+        user.email = "test@example.com";
+        user.role = Role.ADMIN;
+        user.password = Hash.sha256( SALT, "12345" );
+        user.organizationId = "987654321";
+        user.organizationName = "test";
 
-      userStorage.store( user );
+        userStorage.store( user );
 
-      assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" )
-         .isOk()
-         .is( response -> response.contentString.get().matches( "id|userEmail|role|expire" ) );
-   }
+        assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" )
+            .isOk()
+            .is( response -> response.contentString.get().matches( "id|userEmail|role|expire" ) );
+    }
 
 }

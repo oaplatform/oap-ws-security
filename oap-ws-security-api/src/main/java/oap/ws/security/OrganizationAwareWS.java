@@ -20,14 +20,14 @@ public interface OrganizationAwareWS {
     @SuppressWarnings( "unused" )
     default ValidationErrors validateOrganizationAccess( User user, String organizationId ) {
         return user.role == ADMIN || Objects.equals( user.organizationId, organizationId )
-                ? empty()
-                : error( HTTP_FORBIDDEN, "Forbidden" );
+            ? empty()
+            : error( HTTP_FORBIDDEN, "Forbidden" );
     }
 
     static ValidationErrors validateObjectAccess( Optional<? extends OrganizationAware> object, String organizationId ) {
         return object.map( oa -> !Objects.equals( oa.organization(), organizationId )
-                ? error( HTTP_FORBIDDEN, "Forbidden" )
-                : empty() )
-                .orElse( empty() );
+            ? error( HTTP_FORBIDDEN, "Forbidden" )
+            : empty() )
+            .orElse( empty() );
     }
 }
