@@ -10,17 +10,17 @@ interface OrganizationWSI {
 
     Organization store( Organization organization );
 
-    List<Organization> getAllOrganizations();
+    List<Organization> list();
 
-    Optional<Organization> getOrganization( String organizationId, User user );
+    Optional<Organization> organization( String organizationId, User user );
 
-    void removeOrganization( String organizationId );
+    void delete( String organizationId );
 
-    List<User> getAllUsers(String organizationId);
+    List<User> users( String organizationId );
 
-    User storeUser( User storeUser, String organizationId, User user );
+    User userStore( User storeUser, String organizationId, User user );
 
-    Optional<User> getUser( String organizatinoId, String email, User user );
+    Optional<User> user( String organizatinoId, String email, User user );
 
-    void removeUser( String organizationId, String email, User user );
+    void userDelete( String organizationId, String email, User user );
 }

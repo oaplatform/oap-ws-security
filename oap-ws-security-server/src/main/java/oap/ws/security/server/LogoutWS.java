@@ -30,15 +30,15 @@ public class LogoutWS {
     @WsSecurity( role = Role.USER )
     @WsValidate( { "validateUserAccess" } )
     public void logout( @WsParam( from = QUERY ) String email, @WsParam( from = SESSION ) User user ) {
-        log.debug("Invalidating token for user [{}]", email);
+        log.debug( "Invalidating token for user [{}]", email );
 
         authService.invalidateUser( email );
     }
 
-    @SuppressWarnings("unused")
-    public ValidationErrors validateUserAccess(final String email, final User user) {
-        return  Objects.equals( user.email, email )
-                ? ValidationErrors.empty()
-                : ValidationErrors.error( HTTP_FORBIDDEN, format("User [%s] doesn't have enough permissions", user.email) );
+    @SuppressWarnings( "unused" )
+    public ValidationErrors validateUserAccess( final String email, final User user ) {
+        return Objects.equals( user.email, email )
+            ? ValidationErrors.empty()
+            : ValidationErrors.error( HTTP_FORBIDDEN, format( "User [%s] doesn't have enough permissions", user.email ) );
     }
 }

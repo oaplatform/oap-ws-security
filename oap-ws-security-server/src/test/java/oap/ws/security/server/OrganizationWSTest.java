@@ -29,7 +29,7 @@ import oap.concurrent.SynchronizedThread;
 import oap.http.PlainHttpListener;
 import oap.http.Server;
 import oap.http.cors.GenericCorsPolicy;
-import oap.io.Resources;
+import oap.testng.Asserts;
 import oap.testng.Env;
 import oap.ws.SessionManager;
 import oap.ws.WebServices;
@@ -49,12 +49,10 @@ import static oap.http.testng.HttpAsserts.HTTP_PREFIX;
 import static oap.http.testng.HttpAsserts.assertDelete;
 import static oap.http.testng.HttpAsserts.assertPost;
 import static oap.http.testng.HttpAsserts.reset;
+import static oap.ws.validate.testng.ValidationErrorsAssertion.validating;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
-import static oap.http.testng.HttpAsserts.*;
-import static oap.ws.validate.testng.ValidationErrorsAssertion.validating;
-import static org.testng.Assert.*;
 
 public class OrganizationWSTest {
 
@@ -68,16 +66,16 @@ public class OrganizationWSTest {
 
     private SynchronizedThread listener;
 
-   private OrganizationWS organizationWS;
+    private OrganizationWS organizationWS;
 
-   @BeforeClass
-   public void startServer() {
-      userStorage = new UserStorage( Env.tmpPath( "users" ) );
-      organizationStorage = new OrganizationStorage( Env.tmpPath( "organizations" ) );
+    @BeforeClass
+    public void startServer() {
+        userStorage = new UserStorage( Env.tmpPath( "users" ) );
+        organizationStorage = new OrganizationStorage( Env.tmpPath( "organizations" ) );
 
-      organizationWS = new OrganizationWS(organizationStorage, userStorage, "test");
+        organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
 
-      Application.register( "ws-organization", organizationWS);
+        Application.register( "ws-organization", organizationWS );
 
         webServices.start();
         listener = new SynchronizedThread( new PlainHttpListener( server, Env.port() ) );
@@ -100,145 +98,145 @@ public class OrganizationWSTest {
 
     @Test
     public void testShouldStoreGetDeleteOrganization() throws IOException {
-        final String request = Resources.readString( getClass(), getClass().getSimpleName() + "/12345.json" ).get();
+        final String request = Asserts.contentOfTestResource( getClass(), "12345.json" );
 
-      assertPost( HTTP_PREFIX + "/organization/store", request, ContentType.APPLICATION_JSON )
-         .hasCode( 200 );
+        assertPost( HTTP_PREFIX + "/organization/store", request, ContentType.APPLICATION_JSON )
+            .hasCode( 200 );
 
-      final User sessionUser = new User(Role.USER,"12345", "test@test.com");
+        final User sessionUser = new User( Role.USER, "12345", "test@test.com" );
 
-      final Organization organization = organizationWS.getOrganization( "12345", sessionUser ).get();
+        final Organization organization = organizationWS.organization( "12345", sessionUser ).get();
 
         assertEquals( organization.id, "12345" );
         assertEquals( organization.name, "test" );
         assertEquals( organization.description, "test organization" );
 
-      assertDelete( HTTP_PREFIX + "/organization/12345" ).hasCode( 204 );
+        assertDelete( HTTP_PREFIX + "/organization/12345" ).hasCode( 204 );
 
         assertFalse( organizationStorage.get( "12345" ).isPresent() );
     }
 
-   @Test
-   public void testShouldNotStoreUserIfOrganizationDoesNotExist() {
-      final User user = new User(Role.USER, "12345", "test@example.com");
-      user.password = "123456789";
-      user.organizationName = "test";
+    @Test
+    public void testShouldNotStoreUserIfOrganizationDoesNotExist() {
+        final User user = new User( Role.USER, "12345", "test@example.com" );
+        user.password = "123456789";
+        user.organizationName = "test";
 
-      final User userUpdate = new User(Role.USER, "98765", "test-2@example.com");
+        final User userUpdate = new User( Role.USER, "98765", "test-2@example.com" );
 
-      validating(OrganizationWSI.class)
-              .isError(403, "Forbidden")
-              .forInstance(organizationWS)
-              .storeUser( userUpdate, "98765", user );
-   }
+        validating( OrganizationWSI.class )
+            .isError( 403, "Forbidden" )
+            .forInstance( organizationWS )
+            .userStore( userUpdate, "98765", user );
+    }
 
-   @Test
-   public void testShouldNotStoreUserIfOrganizationMismatch() {
-      final User user = new User(Role.ORGANIZATION_ADMIN, "12345","test@example.com");
-      user.password = "123456789";
-      user.organizationName = "test";
+    @Test
+    public void testShouldNotStoreUserIfOrganizationMismatch() {
+        final User user = new User( Role.ORGANIZATION_ADMIN, "12345", "test@example.com" );
+        user.password = "123456789";
+        user.organizationName = "test";
 
-      final Organization organization = new Organization("98765");
+        final Organization organization = new Organization( "98765" );
 
-      organizationStorage.store( organization );
+        organizationStorage.store( organization );
 
-      final User userUpdate = new User(Role.USER,"98765", "test-2@example.com");
+        final User userUpdate = new User( Role.USER, "98765", "test-2@example.com" );
 
-      validating(OrganizationWSI.class)
-              .isError(403, "Forbidden")
-              .forInstance(organizationWS)
-              .storeUser( userUpdate, "98765", user );
-   }
+        validating( OrganizationWSI.class )
+            .isError( 403, "Forbidden" )
+            .forInstance( organizationWS )
+            .userStore( userUpdate, "98765", user );
+    }
 
-   @Test
-   public void testShouldNotStoreUserIfItExistsInAnotherOrganization() {
-      final User user = new User(Role.ADMIN, "12345", "test@example.com");
-      user.password = "123456789";
-      user.organizationName = "test";
+    @Test
+    public void testShouldNotStoreUserIfItExistsInAnotherOrganization() {
+        final User user = new User( Role.ADMIN, "12345", "test@example.com" );
+        user.password = "123456789";
+        user.organizationName = "test";
 
         userStorage.store( user );
 
-      final Organization organizationA = new Organization("12345");
+        final Organization organizationA = new Organization( "12345" );
 
-      final Organization organizationB = new Organization("98765");
+        final Organization organizationB = new Organization( "98765" );
 
-      organizationStorage.store( organizationA );
-      organizationStorage.store( organizationB );
+        organizationStorage.store( organizationA );
+        organizationStorage.store( organizationB );
 
-      final User userUpdate = new User(Role.USER, "98765", "test@example.com");
+        final User userUpdate = new User( Role.USER, "98765", "test@example.com" );
 
-      validating(OrganizationWSI.class)
-              .isError(403, "Forbidden")
-              .forInstance(organizationWS)
-              .storeUser( userUpdate, "98765", user );
-   }
+        validating( OrganizationWSI.class )
+            .isError( 403, "Forbidden" )
+            .forInstance( organizationWS )
+            .userStore( userUpdate, "98765", user );
+    }
 
-   @Test
-   public void testShouldSaveUserIfSessionUserIsAdmin() {
-      final User user = new User(Role.USER, "12345", "test@example.com");
-      user.password = "123456789";
-      user.organizationName = "test";
+    @Test
+    public void testShouldSaveUserIfSessionUserIsAdmin() {
+        final User user = new User( Role.USER, "12345", "test@example.com" );
+        user.password = "123456789";
+        user.organizationName = "test";
 
-      final Organization organization = new Organization("12345");
+        final Organization organization = new Organization( "12345" );
 
-      organizationStorage.store( organization );
+        organizationStorage.store( organization );
 
-      final User sessionUser = new User(Role.ADMIN, "someOrg", "98765");
+        final User sessionUser = new User( Role.ADMIN, "someOrg", "98765" );
 
-        organizationWS.storeUser( user, "12345", sessionUser );
+        organizationWS.userStore( user, "12345", sessionUser );
 
         assertNotNull( userStorage.get( "test@example.com" ).isPresent() );
     }
 
-   @Test
-   public void testShouldNotSaveUserWithHigherRoleThanSessionUserIfNotAdmin() {
-      final User user = new User(Role.ADMIN, "12345", "test@example.com");
-      user.password = "123456789";
-      user.organizationName = "test";
+    @Test
+    public void testShouldNotSaveUserWithHigherRoleThanSessionUserIfNotAdmin() {
+        final User user = new User( Role.ADMIN, "12345", "test@example.com" );
+        user.password = "123456789";
+        user.organizationName = "test";
 
-      final Organization organization = new Organization("12345");
+        final Organization organization = new Organization( "12345" );
 
-      organizationStorage.store( organization );
+        organizationStorage.store( organization );
 
-      final User sessionUser = new User(Role.ORGANIZATION_ADMIN, "12345", "sessionUser@test.com");
+        final User sessionUser = new User( Role.ORGANIZATION_ADMIN, "12345", "sessionUser@test.com" );
 
-      validating(OrganizationWSI.class)
-              .isError(403, "Forbidden")
-              .forInstance(organizationWS)
-              .storeUser( user, "12345", sessionUser );
-   }
+        validating( OrganizationWSI.class )
+            .isError( 403, "Forbidden" )
+            .forInstance( organizationWS )
+            .userStore( user, "12345", sessionUser );
+    }
 
-   @Test
-   public void testShouldNotSaveUserIfSessionUserHasDifferentOrganization() {
-      final User user = new User(Role.USER, "12345", "test@example.com");
-      user.password = "123456789";
-      user.organizationName = "test";
+    @Test
+    public void testShouldNotSaveUserIfSessionUserHasDifferentOrganization() {
+        final User user = new User( Role.USER, "12345", "test@example.com" );
+        user.password = "123456789";
+        user.organizationName = "test";
 
-      final Organization organization = new Organization("12345");
+        final Organization organization = new Organization( "12345" );
 
-      organizationStorage.store( organization );
+        organizationStorage.store( organization );
 
-      final User sessionUser = new User(Role.ORGANIZATION_ADMIN, "98765", "org-admin@example.com");
+        final User sessionUser = new User( Role.ORGANIZATION_ADMIN, "98765", "org-admin@example.com" );
 
-      validating(OrganizationWSI.class)
-              .isError(403, "Forbidden")
-              .forInstance(organizationWS)
-              .storeUser( user, "12345", sessionUser );
-   }
+        validating( OrganizationWSI.class )
+            .isError( 403, "Forbidden" )
+            .forInstance( organizationWS )
+            .userStore( user, "12345", sessionUser );
+    }
 
-   @Test
-   public void testShouldSaveUserIfSessionUserIsOrganizationAdmin() {
-      final User user = new User(Role.USER, "12345", "test@example.com");
-      user.password = "123456789";
-      user.organizationName = "test";
+    @Test
+    public void testShouldSaveUserIfSessionUserIsOrganizationAdmin() {
+        final User user = new User( Role.USER, "12345", "test@example.com" );
+        user.password = "123456789";
+        user.organizationName = "test";
 
-      final Organization organization = new Organization("12345");
+        final Organization organization = new Organization( "12345" );
 
-      organizationStorage.store( organization );
+        organizationStorage.store( organization );
 
-      final User sessionUser = new User(Role.ORGANIZATION_ADMIN, "12345", "sessionUser@example.com");
+        final User sessionUser = new User( Role.ORGANIZATION_ADMIN, "12345", "sessionUser@example.com" );
 
-        organizationWS.storeUser( user, "12345", sessionUser );
+        organizationWS.userStore( user, "12345", sessionUser );
 
         assertNotNull( userStorage.get( "test@example.com" ).isPresent() );
     }

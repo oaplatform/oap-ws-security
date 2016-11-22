@@ -51,7 +51,7 @@ public class LoginWS {
     }
 
     @WsMethod( method = GET, path = "/" )
-    public HttpResponse login( @WsParam( from = QUERY ) String email, @WsParam( from = QUERY )String password ) {
+    public HttpResponse login( @WsParam( from = QUERY ) String email, @WsParam( from = QUERY ) String password ) {
         final Optional<Token> optionalToken = authService.generateToken( email, password );
 
         if( optionalToken.isPresent() ) {

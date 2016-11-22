@@ -85,10 +85,10 @@ public class LoginWSTest {
         userStorage.clear();
     }
 
-   @Test
-   public void testShouldNotLoginNonExistingUser() {
-      assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" ).hasCode( 401 ).hasBody( "" );
-   }
+    @Test
+    public void testShouldNotLoginNonExistingUser() {
+        assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" ).hasCode( 401 ).hasBody( "" );
+    }
 
     @Test
     public void testShouldLoginExistingUser() {

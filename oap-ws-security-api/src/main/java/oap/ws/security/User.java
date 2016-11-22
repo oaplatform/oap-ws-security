@@ -28,6 +28,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @ToString
 @EqualsAndHashCode
@@ -53,5 +54,10 @@ public class User implements OrganizationAware, Serializable {
     @Override
     public String organization() {
         return organizationId;
+    }
+
+    @Override
+    public boolean belongsToOrganization( String organizationId ) {
+        return Objects.equals( this.organizationId, organizationId );
     }
 }
