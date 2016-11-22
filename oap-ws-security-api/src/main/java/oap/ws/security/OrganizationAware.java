@@ -6,8 +6,12 @@
 
 package oap.ws.security;
 
+import java.util.Objects;
+
 public interface OrganizationAware {
     String organization();
 
-    boolean belongsToOrganization( String organizationId );
+    default boolean belongsToOrganization( String organizationId ) {
+        return Objects.equals( organization(), organizationId );
+    }
 }
