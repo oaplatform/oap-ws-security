@@ -26,15 +26,13 @@ package oap.ws.security.server;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.Iterables;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import oap.util.Hash;
 import oap.ws.security.Token;
 import oap.ws.security.User;
 import org.joda.time.DateTime;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -58,45 +56,39 @@ public class AuthService {
     }
 
     public synchronized Optional<Token> generateToken( String email, String password ) {
-        final Optional<User> userOptional = userStorage.get( email );
+        final User user = userStorage.get( email ).orElse( null );
+        if( user == null ) return Optional.empty();
 
-        if( userOptional.isPresent() ) {
-            final User user = userOptional.get();
+        final String inputPassword = Hash.sha256( salt, password );
+        if( !user.password.equals( inputPassword ) ) return Optional.empty();
 
-            final String inputPassword = Hash.sha256( salt, password );
-            if( user.password.equals( inputPassword ) ) {
-                final List<Token> tokens = new ArrayList<>();
+        Token token = null;
 
-                synchronized( this ) {
-                    tokenStorage.asMap().forEach( ( s, token ) -> {
-                        if( token.user.email.equals( user.email ) ) {
-                            tokens.add( token );
-                        }
-                    } );
-
-                    if( tokens.isEmpty() ) {
-                        log.debug( "Generating new token for user [{}]...", user.email );
-                        final Token token = new Token();
-                        token.user = user;
-                        token.created = DateTime.now();
-                        token.id = UUID.randomUUID().toString();
-
-                        tokenStorage.put( token.id, token );
-
-                        return Optional.of( token );
-                    } else {
-                        final Token existingToken = Iterables.getOnlyElement( tokens );
-
-                        log.debug( "Updating existing token for user [{}]...", user.email );
-                        tokenStorage.put( existingToken.id, existingToken );
-
-                        return Optional.of( existingToken );
-                    }
+        synchronized( this ) {
+            for( val t : tokenStorage.asMap().values() ) {
+                if( t.user.email.equals( user.email ) ) {
+                    token = t;
+                    break;
                 }
             }
-        }
 
-        return Optional.empty();
+            if( token != null ) {
+                log.debug( "Updating existing token for user [{}]...", user.email );
+                tokenStorage.put( token.id, token );
+
+                return Optional.of( token );
+            }
+
+            log.debug( "Generating new token for user [{}]...", user.email );
+            token = new Token();
+            token.user = user;
+            token.created = DateTime.now();
+            token.id = UUID.randomUUID().toString();
+
+            tokenStorage.put( token.id, token );
+
+            return Optional.of( token );
+        }
     }
 
     public synchronized Optional<Token> getToken( String tokenId ) {

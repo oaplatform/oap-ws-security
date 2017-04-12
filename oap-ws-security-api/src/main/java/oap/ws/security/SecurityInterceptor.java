@@ -56,9 +56,8 @@ public class SecurityInterceptor implements Interceptor {
                 return Optional.of( httpResponse );
             }
 
-            final Optional<Object> optionalUser = session.get( "user" );
-            if( optionalUser.isPresent() ) {
-                final User user = ( User ) optionalUser.get();
+            User user = ( User ) session.get( "user" ).orElse( null );
+            if( user != null ) {
                 log.trace( "User [{}] found in session", user.email );
 
                 final Role methodRole = annotation.get().role();
@@ -81,9 +80,9 @@ public class SecurityInterceptor implements Interceptor {
                     return Optional.of( httpResponse );
                 }
 
-                final Optional<Token> optionalToken = tokenService.getToken( sessionToken );
+                final Token token = tokenService.getToken( sessionToken ).orElse( null );
 
-                if( !optionalToken.isPresent() ) {
+                if( token == null ) {
                     final HttpResponse httpResponse = HttpResponse.status( 401, format( "Token id [%s] expired or was " +
                         "not created", sessionToken ) );
 
@@ -92,8 +91,7 @@ public class SecurityInterceptor implements Interceptor {
                     return Optional.of( httpResponse );
                 }
 
-                final Token token = optionalToken.get();
-                final User user = token.user;
+                user = token.user;
 
                 session.set( "sessionToken", token.id );
                 session.set( "user", user );
