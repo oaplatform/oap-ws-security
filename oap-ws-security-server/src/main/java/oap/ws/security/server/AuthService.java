@@ -64,31 +64,30 @@ public class AuthService {
 
         Token token = null;
 
-        synchronized( this ) {
-            for( val t : tokenStorage.asMap().values() ) {
-                if( t.user.email.equals( user.email ) ) {
-                    token = t;
-                    break;
-                }
+        for( Token t : tokenStorage.asMap().values() ) {
+            if( t.user.email.equals( user.email ) ) {
+                token = t;
+                break;
             }
+        }
 
-            if( token != null ) {
-                log.debug( "Updating existing token for user [{}]...", user.email );
-                tokenStorage.put( token.id, token );
-
-                return Optional.of( token );
-            }
-
-            log.debug( "Generating new token for user [{}]...", user.email );
-            token = new Token();
-            token.user = user;
-            token.created = DateTime.now();
-            token.id = UUID.randomUUID().toString();
-
+        if( token != null ) {
+            log.debug( "Updating existing token for user [{}]...", user.email );
             tokenStorage.put( token.id, token );
 
             return Optional.of( token );
         }
+
+        log.debug( "Generating new token for user [{}]...", user.email );
+        token = new Token();
+        token.user = user;
+        token.created = DateTime.now();
+        token.id = UUID.randomUUID().toString();
+
+        tokenStorage.put( token.id, token );
+
+        return Optional.of( token );
+
     }
 
     public synchronized Optional<Token> getToken( String tokenId ) {
