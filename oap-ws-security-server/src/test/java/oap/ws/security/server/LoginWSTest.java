@@ -31,6 +31,7 @@ import oap.http.Server;
 import oap.http.cors.GenericCorsPolicy;
 import oap.testng.Env;
 import oap.util.Hash;
+import oap.util.Lists;
 import oap.ws.SessionManager;
 import oap.ws.WebServices;
 import oap.ws.WsConfig;
@@ -52,7 +53,7 @@ public class LoginWSTest {
 
     private final Server server = new Server( 100 );
     private final WebServices webServices = new WebServices( server, new SessionManager( 10, null, "/" ),
-        new GenericCorsPolicy( "*", "Authorization", true ),
+        new GenericCorsPolicy( "*", "Authorization", true, Lists.of( "POST", "GET" ) ),
         WsConfig.CONFIGURATION.fromResource( getClass(), "ws-login.conf" ) );
 
     private UserStorage userStorage;

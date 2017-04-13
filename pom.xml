@@ -34,7 +34,7 @@
         <slf4j.version>1.7.21</slf4j.version>
         <httpcomponents.version>4.4.4</httpcomponents.version>
         <joda.version>2.9.3</joda.version>
-        <jackson.version>2.7</jackson.version>
+        <jackson.version>2.8.6</jackson.version>
         <lombok.version>1.16.6</lombok.version>
     </properties>
 
@@ -60,6 +60,7 @@
                     <execution>
                         <id>enforce</id>
                         <configuration>
+                            <fail>false</fail>
                             <rules>
                                 <DependencyConvergence/>
                             </rules>
