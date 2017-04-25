@@ -25,6 +25,7 @@
 package oap.ws.security.server;
 
 import lombok.extern.slf4j.Slf4j;
+import oap.json.Binder;
 import oap.util.Hash;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
@@ -117,10 +118,13 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
     public User userStore( @WsParam( from = BODY ) User storeUser, @WsParam( from = PATH ) String organizationId,
                            @WsParam( from = SESSION ) User user ) {
 
-        storeUser.password = Hash.sha256( salt, storeUser.password );
-        userStorage.store( storeUser );
+        final User newUser = Binder.json.clone( storeUser );
+        newUser.password = Hash.sha256( salt, storeUser.password );
+        newUser.email = storeUser.email.toLowerCase();
 
-        log.debug( "New information about user " + storeUser.email + " was successfully added" );
+        userStorage.store( newUser );
+
+        log.debug( "New information about user " + newUser.email + " was successfully added" );
 
         return Converters.toUserDTO( storeUser );
     }
@@ -132,7 +136,7 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
     public Optional<User> user( @WsParam( from = PATH ) String organizationId,
                                 @WsParam( from = PATH ) String email,
                                 @WsParam( from = SESSION ) User user ) {
-        return userStorage.get( email ).map( Converters::toUserDTO );
+        return userStorage.get( email.toLowerCase() ).map( Converters::toUserDTO );
     }
 
     @WsMethod( method = DELETE, path = "/{organizationId}/users/{email}/delete" )
@@ -141,7 +145,7 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
     @Override
     public void userDelete( @WsParam( from = PATH ) String organizationId, @WsParam( from = PATH ) String email,
                             @WsParam( from = SESSION ) User user ) {
-        userStorage.delete( email );
+        userStorage.delete( email.toLowerCase() );
 
         log.debug( "User [{}] deleted", email );
     }
@@ -153,7 +157,7 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
 
     @SuppressWarnings( "unused" )
     public ValidationErrors validateUserAccessById( String organizationId, String email ) {
-        return OrganizationAwareWS.validateObjectAccess( userStorage.get( email ), organizationId );
+        return OrganizationAwareWS.validateObjectAccess( userStorage.get( email.toLowerCase() ), organizationId );
     }
 
     @SuppressWarnings( "unused" )
@@ -164,7 +168,7 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
 
     @SuppressWarnings( "unused" )
     public ValidationErrors validateUserCreationRole( User user, User storeUser ) {
-        return ( user.role == Role.USER && !user.email.equals( storeUser.email ) )
+        return ( user.role == Role.USER && !user.email.toLowerCase().equals( storeUser.email.toLowerCase() ) )
             ? ValidationErrors.error( HTTP_FORBIDDEN, "Forbidden" ) : ValidationErrors.empty();
     }
 

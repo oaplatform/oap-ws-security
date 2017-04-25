@@ -27,7 +27,6 @@ package oap.ws.security.server;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import oap.util.Hash;
 import oap.ws.security.Token;
 import oap.ws.security.User;
@@ -56,7 +55,7 @@ public class AuthService {
     }
 
     public synchronized Optional<Token> generateToken( String email, String password ) {
-        final User user = userStorage.get( email ).orElse( null );
+        final User user = userStorage.get( email.toLowerCase() ).orElse( null );
         if( user == null ) return Optional.empty();
 
         final String inputPassword = Hash.sha256( salt, password );
@@ -98,7 +97,7 @@ public class AuthService {
         final ConcurrentMap<String, Token> tokens = tokenStorage.asMap();
 
         for( Map.Entry<String, Token> entry : tokens.entrySet() ) {
-            if( Objects.equals( entry.getValue().user.email, email ) ) {
+            if( Objects.equals( entry.getValue().user.email, email.toLowerCase() ) ) {
                 log.debug( "Deleting token [{}]...", entry.getKey() );
                 tokenStorage.invalidate( entry.getKey() );
 
