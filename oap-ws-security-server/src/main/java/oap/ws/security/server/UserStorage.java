@@ -25,13 +25,12 @@
 package oap.ws.security.server;
 
 import oap.storage.FileStorage;
-import oap.ws.security.User;
 
 import java.nio.file.Path;
 
-public class UserStorage extends FileStorage<User> {
+public class UserStorage extends FileStorage<DefaultUser> {
 
     public UserStorage( Path path ) {
-        super( path, user -> user.email );
+        super( path, user -> user.getEmail() );
     }
 }

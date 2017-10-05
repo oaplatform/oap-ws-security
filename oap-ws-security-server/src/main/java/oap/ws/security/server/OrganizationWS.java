@@ -29,7 +29,6 @@ import oap.json.Binder;
 import oap.util.Hash;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
-import oap.ws.security.Organization;
 import oap.ws.security.OrganizationAwareWS;
 import oap.ws.security.Role;
 import oap.ws.security.User;
@@ -87,7 +86,7 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
     @WsValidate( { "validateOrganizationAccess" } )
     @Override
     public Optional<Organization> organization( @WsParam( from = PATH ) String organizationId,
-                                                @WsParam( from = SESSION ) User user ) {
+                                                @WsParam( from = SESSION ) DefaultUser user ) {
         return organizationStorage.get( organizationId );
     }
 
@@ -115,10 +114,10 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
     @WsSecurity( role = Role.USER )
     @WsValidate( { "validateOrganizationAccess", "validateUserAccess", "validateUserPrecedence", "validateUserCreationRole" } )
     @Override
-    public User userStore( @WsParam( from = BODY ) User storeUser, @WsParam( from = PATH ) String organizationId,
-                           @WsParam( from = SESSION ) User user ) {
+    public User userStore( @WsParam( from = BODY ) DefaultUser storeUser, @WsParam( from = PATH ) String organizationId,
+                           @WsParam( from = SESSION ) DefaultUser user ) {
 
-        final User newUser = Binder.json.clone( storeUser );
+        final DefaultUser newUser = Binder.json.clone( storeUser );
         newUser.password = Hash.sha256( salt, storeUser.password );
         newUser.email = storeUser.email.toLowerCase();
 
@@ -152,7 +151,7 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
 
     @SuppressWarnings( "unused" )
     public ValidationErrors validateUserAccess( String organizationId, User storeUser ) {
-        return validateUserAccessById( organizationId, storeUser.email );
+        return validateUserAccessById( organizationId, storeUser.getEmail() );
     }
 
     @SuppressWarnings( "unused" )
@@ -162,14 +161,15 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
 
     @SuppressWarnings( "unused" )
     public ValidationErrors validateUserPrecedence( User user, User storeUser ) {
-        return ( user.role != Role.ADMIN && storeUser.role.precedence < user.role.precedence )
+        return ( user.getRole() != Role.ADMIN && storeUser.getRole().precedence < user.getRole().precedence )
             ? ValidationErrors.error( HTTP_FORBIDDEN, "Forbidden" ) : ValidationErrors.empty();
     }
 
     @SuppressWarnings( "unused" )
     public ValidationErrors validateUserCreationRole( User user, User storeUser ) {
-        return ( user.role == Role.USER && !user.email.toLowerCase().equals( storeUser.email.toLowerCase() ) )
-            ? ValidationErrors.error( HTTP_FORBIDDEN, "Forbidden" ) : ValidationErrors.empty();
+        return
+            ( user.getRole() == Role.USER && !user.getEmail().toLowerCase().equals( storeUser.getEmail().toLowerCase() ) )
+                ? ValidationErrors.error( HTTP_FORBIDDEN, "Forbidden" ) : ValidationErrors.empty();
     }
 
 }

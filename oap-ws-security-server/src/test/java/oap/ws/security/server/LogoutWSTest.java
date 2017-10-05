@@ -3,7 +3,6 @@ package oap.ws.security.server;
 import oap.testng.Env;
 import oap.util.Hash;
 import oap.ws.security.Role;
-import oap.ws.security.User;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -25,7 +24,7 @@ public class LogoutWSTest {
 
     @Test
     public void testShouldLogoutExistingUser() {
-        final User user = new User();
+        final DefaultUser user = new DefaultUser();
         user.email = "test@example.com";
         user.role = Role.ADMIN;
         user.password = Hash.sha256( SALT, "12345" );

@@ -29,7 +29,6 @@ import oap.testng.Env;
 import oap.util.Hash;
 import oap.ws.security.Role;
 import oap.ws.security.Token;
-import oap.ws.security.User;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -56,7 +55,7 @@ public class AuthServiceTest extends AbstractTest {
 
     @Test
     public void testShouldGenerateNewToken() {
-        final User user = new User();
+        final DefaultUser user = new DefaultUser();
         user.email = "test@example.com";
         user.password = Hash.sha256( "test", "12345" );
         user.role = Role.ADMIN;
@@ -65,15 +64,15 @@ public class AuthServiceTest extends AbstractTest {
 
         final Token token = authService.generateToken( user.email, "12345" ).get();
 
-        assertEquals( token.user.role, Role.ADMIN );
-        assertEquals( token.user.email, "test@example.com" );
+        assertEquals( token.user.getRole(), Role.ADMIN );
+        assertEquals( token.user.getEmail(), "test@example.com" );
         assertNotNull( token.id );
         assertNotNull( token.created );
     }
 
     @Test
     public void testShouldDeleteExpiredToken() throws InterruptedException {
-        final User user = new User();
+        final DefaultUser user = new DefaultUser();
         user.email = "test@example.com";
         user.password = Hash.sha256( "test", "12345" );
         user.role = Role.ADMIN;

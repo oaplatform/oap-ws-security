@@ -33,11 +33,11 @@ public final class Converters {
     }
 
     public static User toUserDTO( User user ) {
-        final User userDTO = new User();
-        userDTO.email = user.email;
-        userDTO.role = user.role;
-        userDTO.organizationId = user.organizationId;
-        userDTO.organizationName = user.organizationName;
+        final DefaultUser userDTO = new DefaultUser();
+        userDTO.email = user.getEmail();
+        userDTO.role = user.getRole();
+        userDTO.organizationId = user.getOrganization();
+        userDTO.organizationName = user instanceof DefaultUser ? ( ( DefaultUser ) user ).organizationName : "";
 
         return userDTO;
     }

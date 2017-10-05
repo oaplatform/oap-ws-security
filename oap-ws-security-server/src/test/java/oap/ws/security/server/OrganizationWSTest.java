@@ -35,9 +35,7 @@ import oap.util.Lists;
 import oap.ws.SessionManager;
 import oap.ws.WebServices;
 import oap.ws.WsConfig;
-import oap.ws.security.Organization;
 import oap.ws.security.Role;
-import oap.ws.security.User;
 import org.apache.http.entity.ContentType;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -101,10 +99,10 @@ public class OrganizationWSTest {
     public void testShouldStoreGetDeleteOrganization() throws IOException {
         final String request = Asserts.contentOfTestResource( getClass(), "12345.json" );
 
-        assertPost( HTTP_PREFIX + "/organization/store", request, ContentType.APPLICATION_JSON )
+        assertPost( HTTP_PREFIX() + "/organization/store", request, ContentType.APPLICATION_JSON )
             .hasCode( 200 );
 
-        final User sessionUser = new User( Role.USER, "12345", "test@test.com" );
+        final DefaultUser sessionUser = new DefaultUser( Role.USER, "12345", "test@test.com" );
 
         final Organization organization = organizationWS.organization( "12345", sessionUser ).get();
 
@@ -112,18 +110,18 @@ public class OrganizationWSTest {
         assertEquals( organization.name, "test" );
         assertEquals( organization.description, "test organization" );
 
-        assertDelete( HTTP_PREFIX + "/organization/12345" ).hasCode( 204 );
+        assertDelete( HTTP_PREFIX() + "/organization/12345" ).hasCode( 204 );
 
         assertFalse( organizationStorage.get( "12345" ).isPresent() );
     }
 
     @Test
     public void testShouldNotStoreUserIfOrganizationDoesNotExist() {
-        final User user = new User( Role.USER, "12345", "test@example.com" );
+        final DefaultUser user = new DefaultUser( Role.USER, "12345", "test@example.com" );
         user.password = "123456789";
         user.organizationName = "test";
 
-        final User userUpdate = new User( Role.USER, "98765", "test-2@example.com" );
+        final DefaultUser userUpdate = new DefaultUser( Role.USER, "98765", "test-2@example.com" );
 
         validating( OrganizationWSI.class )
             .isError( 403, "Forbidden" )
@@ -133,7 +131,7 @@ public class OrganizationWSTest {
 
     @Test
     public void testShouldNotStoreUserIfOrganizationMismatch() {
-        final User user = new User( Role.ORGANIZATION_ADMIN, "12345", "test@example.com" );
+        final DefaultUser user = new DefaultUser( Role.ORGANIZATION_ADMIN, "12345", "test@example.com" );
         user.password = "123456789";
         user.organizationName = "test";
 
@@ -141,7 +139,7 @@ public class OrganizationWSTest {
 
         organizationStorage.store( organization );
 
-        final User userUpdate = new User( Role.USER, "98765", "test-2@example.com" );
+        final DefaultUser userUpdate = new DefaultUser( Role.USER, "98765", "test-2@example.com" );
 
         validating( OrganizationWSI.class )
             .isError( 403, "Forbidden" )
@@ -151,7 +149,7 @@ public class OrganizationWSTest {
 
     @Test
     public void testShouldNotStoreUserIfItExistsInAnotherOrganization() {
-        final User user = new User( Role.ADMIN, "12345", "test@example.com" );
+        final DefaultUser user = new DefaultUser( Role.ADMIN, "12345", "test@example.com" );
         user.password = "123456789";
         user.organizationName = "test";
 
@@ -164,7 +162,7 @@ public class OrganizationWSTest {
         organizationStorage.store( organizationA );
         organizationStorage.store( organizationB );
 
-        final User userUpdate = new User( Role.USER, "98765", "test@example.com" );
+        final DefaultUser userUpdate = new DefaultUser( Role.USER, "98765", "test@example.com" );
 
         validating( OrganizationWSI.class )
             .isError( 403, "Forbidden" )
@@ -174,7 +172,7 @@ public class OrganizationWSTest {
 
     @Test
     public void testShouldSaveUserIfSessionUserIsAdmin() {
-        final User user = new User( Role.USER, "12345", "test@example.com" );
+        final DefaultUser user = new DefaultUser( Role.USER, "12345", "test@example.com" );
         user.password = "123456789";
         user.organizationName = "test";
 
@@ -182,7 +180,7 @@ public class OrganizationWSTest {
 
         organizationStorage.store( organization );
 
-        final User sessionUser = new User( Role.ADMIN, "someOrg", "98765" );
+        final DefaultUser sessionUser = new DefaultUser( Role.ADMIN, "someOrg", "98765" );
 
         organizationWS.userStore( user, "12345", sessionUser );
 
@@ -191,7 +189,7 @@ public class OrganizationWSTest {
 
     @Test
     public void testShouldNotSaveUserWithHigherRoleThanSessionUserIfNotAdmin() {
-        final User user = new User( Role.ADMIN, "12345", "test@example.com" );
+        final DefaultUser user = new DefaultUser( Role.ADMIN, "12345", "test@example.com" );
         user.password = "123456789";
         user.organizationName = "test";
 
@@ -199,7 +197,7 @@ public class OrganizationWSTest {
 
         organizationStorage.store( organization );
 
-        final User sessionUser = new User( Role.ORGANIZATION_ADMIN, "12345", "sessionUser@test.com" );
+        final DefaultUser sessionUser = new DefaultUser( Role.ORGANIZATION_ADMIN, "12345", "sessionUser@test.com" );
 
         validating( OrganizationWSI.class )
             .isError( 403, "Forbidden" )
@@ -209,7 +207,7 @@ public class OrganizationWSTest {
 
     @Test
     public void testShouldNotSaveUserIfSessionUserHasDifferentOrganization() {
-        final User user = new User( Role.USER, "12345", "test@example.com" );
+        final DefaultUser user = new DefaultUser( Role.USER, "12345", "test@example.com" );
         user.password = "123456789";
         user.organizationName = "test";
 
@@ -217,7 +215,7 @@ public class OrganizationWSTest {
 
         organizationStorage.store( organization );
 
-        final User sessionUser = new User( Role.ORGANIZATION_ADMIN, "98765", "org-admin@example.com" );
+        final DefaultUser sessionUser = new DefaultUser( Role.ORGANIZATION_ADMIN, "98765", "org-admin@example.com" );
 
         validating( OrganizationWSI.class )
             .isError( 403, "Forbidden" )
@@ -227,7 +225,7 @@ public class OrganizationWSTest {
 
     @Test
     public void testShouldSaveUserIfSessionUserIsOrganizationAdmin() {
-        final User user = new User( Role.USER, "12345", "test@example.com" );
+        final DefaultUser user = new DefaultUser( Role.USER, "12345", "test@example.com" );
         user.password = "123456789";
         user.organizationName = "test";
 
@@ -235,10 +233,10 @@ public class OrganizationWSTest {
 
         organizationStorage.store( organization );
 
-        final User sessionUser = new User( Role.ORGANIZATION_ADMIN, "12345", "sessionUser@example.com" );
+        final DefaultUser sessionUser = new DefaultUser( Role.ORGANIZATION_ADMIN, "12345", "sessionUser@example.com" );
 
         organizationWS.userStore( user, "12345", sessionUser );
 
-        assertNotNull( userStorage.get( "test@example.com" ).isPresent() );
+        assertNotNull( userStorage.get( "test@example.com" ).orElse( null ) );
     }
 }

@@ -14,11 +14,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>oap-ws-security</groupId>
-            <artifactId>oap-ws-security-api</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
             <groupId>oap</groupId>
             <artifactId>oap-ws</artifactId>
             <version>${oap.version}</version>

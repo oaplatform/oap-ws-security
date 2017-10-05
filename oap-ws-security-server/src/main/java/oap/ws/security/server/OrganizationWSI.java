@@ -1,6 +1,5 @@
 package oap.ws.security.server;
 
-import oap.ws.security.Organization;
 import oap.ws.security.User;
 
 import java.util.List;
@@ -12,13 +11,13 @@ interface OrganizationWSI {
 
     List<Organization> list();
 
-    Optional<Organization> organization( String organizationId, User user );
+    Optional<Organization> organization( String organizationId, DefaultUser user );
 
     void delete( String organizationId );
 
     List<User> users( String organizationId );
 
-    User userStore( User storeUser, String organizationId, User user );
+    User userStore( DefaultUser storeUser, String organizationId, DefaultUser user );
 
     Optional<User> user( String organizatinoId, String email, User user );
 

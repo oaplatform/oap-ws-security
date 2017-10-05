@@ -36,7 +36,6 @@ import oap.ws.SessionManager;
 import oap.ws.WebServices;
 import oap.ws.WsConfig;
 import oap.ws.security.Role;
-import oap.ws.security.User;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -88,12 +87,12 @@ public class LoginWSTest {
 
     @Test
     public void testShouldNotLoginNonExistingUser() {
-        assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" ).hasCode( 401 ).hasBody( "" );
+        assertGet( HTTP_PREFIX() + "/login/?email=test@example.com&password=12345" ).hasCode( 401 ).hasBody( "" );
     }
 
     @Test
     public void testShouldLoginExistingUser() {
-        final User user = new User();
+        final DefaultUser user = new DefaultUser();
         user.email = "test@example.com";
         user.role = Role.ADMIN;
         user.password = Hash.sha256( SALT, "12345" );
@@ -102,7 +101,7 @@ public class LoginWSTest {
 
         userStorage.store( user );
 
-        assertGet( HTTP_PREFIX + "/login/?email=test@example.com&password=12345" )
+        assertGet( HTTP_PREFIX() + "/login/?email=test@example.com&password=12345" )
             .isOk()
             .is( response -> response.contentString.get().matches( "id|userEmail|role|expire" ) );
     }

@@ -59,25 +59,25 @@ public class AuthService {
         if( user == null ) return Optional.empty();
 
         final String inputPassword = Hash.sha256( salt, password );
-        if( !user.password.equals( inputPassword ) ) return Optional.empty();
+        if( !user.getPassword().equals( inputPassword ) ) return Optional.empty();
 
         Token token = null;
 
         for( Token t : tokenStorage.asMap().values() ) {
-            if( t.user.email.equals( user.email ) ) {
+            if( t.user.getEmail().equals( user.getEmail() ) ) {
                 token = t;
                 break;
             }
         }
 
         if( token != null ) {
-            log.debug( "Updating existing token for user [{}]...", user.email );
+            log.debug( "Updating existing token for user [{}]...", user.getEmail() );
             tokenStorage.put( token.id, token );
 
             return Optional.of( token );
         }
 
-        log.debug( "Generating new token for user [{}]...", user.email );
+        log.debug( "Generating new token for user [{}]...", user.getEmail() );
         token = new Token();
         token.user = user;
         token.created = DateTime.now();
@@ -97,7 +97,7 @@ public class AuthService {
         final ConcurrentMap<String, Token> tokens = tokenStorage.asMap();
 
         for( Map.Entry<String, Token> entry : tokens.entrySet() ) {
-            if( Objects.equals( entry.getValue().user.email, email.toLowerCase() ) ) {
+            if( Objects.equals( entry.getValue().user.getEmail(), email.toLowerCase() ) ) {
                 log.debug( "Deleting token [{}]...", entry.getKey() );
                 tokenStorage.invalidate( entry.getKey() );
 
