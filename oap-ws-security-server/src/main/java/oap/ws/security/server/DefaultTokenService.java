@@ -24,6 +24,7 @@
 
 package oap.ws.security.server;
 
+import oap.ws.security.AuthService;
 import oap.ws.security.Token;
 import oap.ws.security.TokenService;
 

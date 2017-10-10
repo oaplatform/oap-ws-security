@@ -27,6 +27,7 @@ package oap.ws.security.server;
 import oap.testng.AbstractTest;
 import oap.testng.Env;
 import oap.util.Hash;
+import oap.ws.security.AuthService;
 import oap.ws.security.Role;
 import oap.ws.security.Token;
 import org.testng.annotations.AfterTest;

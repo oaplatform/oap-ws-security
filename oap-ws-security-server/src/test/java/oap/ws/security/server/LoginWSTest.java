@@ -35,6 +35,8 @@ import oap.util.Lists;
 import oap.ws.SessionManager;
 import oap.ws.WebServices;
 import oap.ws.WsConfig;
+import oap.ws.security.AuthService;
+import oap.ws.security.LoginWS;
 import oap.ws.security.Role;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
