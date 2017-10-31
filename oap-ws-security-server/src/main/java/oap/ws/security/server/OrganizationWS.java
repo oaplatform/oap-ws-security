@@ -26,11 +26,11 @@ package oap.ws.security.server;
 
 import lombok.extern.slf4j.Slf4j;
 import oap.json.Binder;
-import oap.util.Hash;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
 import oap.ws.security.DefaultUser;
 import oap.ws.security.OrganizationAwareWS;
+import oap.ws.security.PasswordHasher;
 import oap.ws.security.Role;
 import oap.ws.security.User;
 import oap.ws.security.WsSecurity;
@@ -54,12 +54,12 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
 
     private final OrganizationStorage organizationStorage;
     private final UserStorage userStorage;
-    private final String salt;
+    private final PasswordHasher passwordHasher;
 
-    public OrganizationWS( OrganizationStorage organizationStorage, UserStorage userStorage, String salt ) {
+    public OrganizationWS( OrganizationStorage organizationStorage, UserStorage userStorage, PasswordHasher passwordHasher ) {
         this.organizationStorage = organizationStorage;
         this.userStorage = userStorage;
-        this.salt = salt;
+        this.passwordHasher = passwordHasher;
     }
 
     @WsMethod( method = POST, path = "/store" )
@@ -119,7 +119,7 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
                            @WsParam( from = SESSION ) DefaultUser user ) {
 
         final DefaultUser newUser = Binder.json.clone( storeUser );
-        newUser.password = Hash.sha256( salt, storeUser.password );
+        newUser.password = passwordHasher.hashPassword( storeUser.password );
         newUser.email = storeUser.email.toLowerCase();
 
         userStorage.store( newUser );
