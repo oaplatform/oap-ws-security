@@ -25,17 +25,8 @@
 package oap.ws.security.server;
 
 import oap.application.Application;
-import oap.concurrent.SynchronizedThread;
-import oap.http.PlainHttpListener;
-import oap.http.Server;
-import oap.http.cors.GenericCorsPolicy;
-import oap.json.schema.TestJsonValidators;
 import oap.testng.Asserts;
 import oap.testng.Env;
-import oap.util.Lists;
-import oap.ws.SessionManager;
-import oap.ws.WebServices;
-import oap.ws.WsConfig;
 import oap.ws.security.DefaultUser;
 import oap.ws.security.Role;
 import org.apache.http.entity.ContentType;
@@ -49,30 +40,26 @@ import java.io.IOException;
 import static oap.http.testng.HttpAsserts.HTTP_PREFIX;
 import static oap.http.testng.HttpAsserts.assertDelete;
 import static oap.http.testng.HttpAsserts.assertPost;
-import static oap.http.testng.HttpAsserts.reset;
 import static oap.ws.validate.testng.ValidationErrorsAssertion.validating;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 
-public class OrganizationWSTest {
-
-    private final Server server = new Server( 100 );
-    private final WebServices webServices = new WebServices( server, new SessionManager( 10, null, "/" ),
-        new GenericCorsPolicy( "*", "Authorization", true, Lists.of( "POST", "GET" ) ),
-        TestJsonValidators.jsonValidatos(),
-        WsConfig.CONFIGURATION.fromResource( getClass(), "ws-organization.conf" ) );
-
-    private UserStorage userStorage;
+public class OrganizationWSTest extends AbstractWsTest {
     private OrganizationStorage organizationStorage;
-
-    private SynchronizedThread listener;
 
     private OrganizationWS organizationWS;
 
+
+    public OrganizationWSTest( ) {
+        super( "ws-organization.conf" );
+    }
+
     @BeforeClass
-    public void startServer() {
-        userStorage = new UserStorage( Env.tmpPath( "users" ) );
+    @Override
+    public void beforeClass() {
+        super.beforeClass();
+
         organizationStorage = new OrganizationStorage( Env.tmpPath( "organizations" ) );
 
         organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
@@ -80,21 +67,21 @@ public class OrganizationWSTest {
         Application.register( "ws-organization", organizationWS );
 
         webServices.start();
-        listener = new SynchronizedThread( new PlainHttpListener( server, Env.port() ) );
-        listener.start();
     }
 
     @AfterClass
-    public void stopServer() {
-        listener.stop();
-        server.stop();
-        webServices.stop();
-        reset();
+    @Override
+    public void afterClass() throws Exception {
+        organizationStorage.close();
+
+        super.afterClass();
     }
 
     @BeforeMethod
-    public void setUp() {
-        userStorage.clear();
+    @Override
+    public void beforeMethod() throws Exception {
+        super.beforeMethod();
+
         organizationStorage.clear();
     }
 

@@ -24,6 +24,7 @@
 
 package oap.ws.security.server;
 
+import lombok.val;
 import oap.ws.security.DefaultUser;
 import oap.ws.security.Token;
 import oap.ws.security.User;
@@ -34,11 +35,20 @@ public final class Converters {
     }
 
     public static DefaultUser toUserDTO( User user ) {
-        final DefaultUser userDTO = new DefaultUser();
+        val userDTO = new DefaultUser();
         userDTO.email = user.getEmail();
         userDTO.role = user.getRole();
         userDTO.organizationId = user.getOrganization();
-        userDTO.organizationName = user instanceof DefaultUser ? ( ( DefaultUser ) user ).organizationName : "";
+        if( user instanceof DefaultUser ) {
+            val defaultUser = ( DefaultUser ) user;
+
+            userDTO.organizationName = defaultUser.organizationName;
+            userDTO.password = defaultUser.password;
+
+        } else {
+            userDTO.organizationName = "";
+            userDTO.password = "";
+        }
 
         return userDTO;
     }

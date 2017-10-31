@@ -1,5 +1,6 @@
 package oap.ws.security.server;
 
+import oap.testng.AbstractTest;
 import oap.testng.Env;
 import oap.util.Hash;
 import oap.ws.security.AuthService;
@@ -7,13 +8,14 @@ import oap.ws.security.DefaultUser;
 import oap.ws.security.LogoutWS;
 import oap.ws.security.PasswordHasher;
 import oap.ws.security.Role;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 
-public class LogoutWSTest {
+public class LogoutWSTest extends AbstractTest {
 
     private static final String SALT = "test";
 
@@ -21,9 +23,16 @@ public class LogoutWSTest {
     private AuthService authService;
 
     @BeforeClass
-    public void startServer() {
+    public void beforeClass() {
         userStorage = new UserStorage( Env.tmpPath( "users" ) );
         authService = new AuthService( userStorage, new PasswordHasher( SALT ), 1 );
+    }
+
+    @AfterClass
+    @Override
+    public void afterClass() throws Exception {
+        userStorage.close();
+        super.afterClass();
     }
 
     @Test

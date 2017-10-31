@@ -32,8 +32,8 @@ import oap.ws.security.DefaultUser;
 import oap.ws.security.PasswordHasher;
 import oap.ws.security.Role;
 import oap.ws.security.Token;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -45,15 +45,18 @@ public class AuthServiceTest extends AbstractTest {
     private AuthService authService;
     private UserStorage userStorage;
 
-    @BeforeTest
-    public void setUp() {
+    @BeforeClass
+    public void beforeClass() {
         userStorage = new UserStorage( Env.tmpPath( "users" ) );
         authService = new AuthService( userStorage, new PasswordHasher( "test" ), 1 );
     }
 
-    @AfterTest
-    public void tearDown() {
-        userStorage.clear();
+    @AfterClass
+    @Override
+    public void afterClass() throws Exception {
+        userStorage.close();
+
+        super.afterClass();
     }
 
     @Test
