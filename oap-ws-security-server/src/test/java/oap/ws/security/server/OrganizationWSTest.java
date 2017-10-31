@@ -28,6 +28,7 @@ import oap.application.Application;
 import oap.testng.Asserts;
 import oap.testng.Env;
 import oap.ws.security.DefaultUser;
+import oap.ws.security.PasswordHasher;
 import oap.ws.security.Role;
 import org.apache.http.entity.ContentType;
 import org.testng.annotations.AfterClass;
@@ -51,7 +52,7 @@ public class OrganizationWSTest extends AbstractWsTest {
     private OrganizationWS organizationWS;
 
 
-    public OrganizationWSTest( ) {
+    public OrganizationWSTest() {
         super( "ws-organization.conf" );
     }
 
@@ -62,7 +63,7 @@ public class OrganizationWSTest extends AbstractWsTest {
 
         organizationStorage = new OrganizationStorage( Env.tmpPath( "organizations" ) );
 
-        organizationWS = new OrganizationWS( organizationStorage, userStorage, "test" );
+        organizationWS = new OrganizationWS( organizationStorage, userStorage, new PasswordHasher( "test" ) );
 
         Application.register( "ws-organization", organizationWS );
 
