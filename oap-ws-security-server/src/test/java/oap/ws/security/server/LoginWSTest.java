@@ -29,6 +29,7 @@ import oap.concurrent.SynchronizedThread;
 import oap.http.PlainHttpListener;
 import oap.http.Server;
 import oap.http.cors.GenericCorsPolicy;
+import oap.json.schema.TestJsonValidators;
 import oap.testng.Env;
 import oap.util.Hash;
 import oap.util.Lists;
@@ -36,7 +37,9 @@ import oap.ws.SessionManager;
 import oap.ws.WebServices;
 import oap.ws.WsConfig;
 import oap.ws.security.AuthService;
+import oap.ws.security.DefaultUser;
 import oap.ws.security.LoginWS;
+import oap.ws.security.PasswordHasher;
 import oap.ws.security.Role;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -55,6 +58,7 @@ public class LoginWSTest {
     private final Server server = new Server( 100 );
     private final WebServices webServices = new WebServices( server, new SessionManager( 10, null, "/" ),
         new GenericCorsPolicy( "*", "Authorization", true, Lists.of( "POST", "GET" ) ),
+        TestJsonValidators.jsonValidatos(),
         WsConfig.CONFIGURATION.fromResource( getClass(), "ws-login.conf" ) );
 
     private UserStorage userStorage;
@@ -65,7 +69,7 @@ public class LoginWSTest {
     @BeforeClass
     public void startServer() {
         userStorage = new UserStorage( Env.tmpPath( "users" ) );
-        authService = new AuthService( userStorage, 1, "test" );
+        authService = new AuthService( userStorage, new PasswordHasher( "test" ), 1 );
 
         Application.register( "ws-login", new LoginWS( authService, null, 10 ) );
 

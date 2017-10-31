@@ -29,6 +29,7 @@ import oap.json.Binder;
 import oap.util.Hash;
 import oap.ws.WsMethod;
 import oap.ws.WsParam;
+import oap.ws.security.DefaultUser;
 import oap.ws.security.OrganizationAwareWS;
 import oap.ws.security.Role;
 import oap.ws.security.User;
@@ -101,7 +102,7 @@ public class OrganizationWS implements OrganizationWSI, OrganizationAwareWS {
     @WsMethod( method = GET, path = "/{organizationId}/users" )
     @WsSecurity( role = ADMIN )
     @Override
-    public List<User> users( @WsParam( from = PATH ) String organizationId ) {
+    public List<? extends User> users( @WsParam( from = PATH ) String organizationId ) {
         log.debug( "Fetching all users for organization [{}]", organizationId );
 
         return userStorage.select()

@@ -29,12 +29,14 @@ import oap.concurrent.SynchronizedThread;
 import oap.http.PlainHttpListener;
 import oap.http.Server;
 import oap.http.cors.GenericCorsPolicy;
+import oap.json.schema.TestJsonValidators;
 import oap.testng.Asserts;
 import oap.testng.Env;
 import oap.util.Lists;
 import oap.ws.SessionManager;
 import oap.ws.WebServices;
 import oap.ws.WsConfig;
+import oap.ws.security.DefaultUser;
 import oap.ws.security.Role;
 import org.apache.http.entity.ContentType;
 import org.testng.annotations.AfterClass;
@@ -58,6 +60,7 @@ public class OrganizationWSTest {
     private final Server server = new Server( 100 );
     private final WebServices webServices = new WebServices( server, new SessionManager( 10, null, "/" ),
         new GenericCorsPolicy( "*", "Authorization", true, Lists.of( "POST", "GET" ) ),
+        TestJsonValidators.jsonValidatos(),
         WsConfig.CONFIGURATION.fromResource( getClass(), "ws-organization.conf" ) );
 
     private UserStorage userStorage;

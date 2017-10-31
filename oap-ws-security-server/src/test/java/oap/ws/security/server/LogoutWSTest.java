@@ -3,7 +3,9 @@ package oap.ws.security.server;
 import oap.testng.Env;
 import oap.util.Hash;
 import oap.ws.security.AuthService;
+import oap.ws.security.DefaultUser;
 import oap.ws.security.LogoutWS;
+import oap.ws.security.PasswordHasher;
 import oap.ws.security.Role;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -21,7 +23,7 @@ public class LogoutWSTest {
     @BeforeClass
     public void startServer() {
         userStorage = new UserStorage( Env.tmpPath( "users" ) );
-        authService = new AuthService( userStorage, 1, SALT );
+        authService = new AuthService( userStorage, new PasswordHasher( SALT ), 1 );
     }
 
     @Test

@@ -25,6 +25,8 @@
 package oap.ws.security.server;
 
 import oap.storage.FileStorage;
+import oap.storage.IdentifierBuilder;
+import oap.ws.security.DefaultUser;
 import oap.ws.security.User;
 
 import java.nio.file.Path;
@@ -33,7 +35,7 @@ import java.util.Optional;
 public class UserStorage extends FileStorage<DefaultUser> implements oap.ws.security.UserStorage {
 
     public UserStorage( Path path ) {
-        super( path, DefaultUser::getEmail );
+        super( path, IdentifierBuilder.identify( DefaultUser::getEmail ).build() );
     }
 
     @Override

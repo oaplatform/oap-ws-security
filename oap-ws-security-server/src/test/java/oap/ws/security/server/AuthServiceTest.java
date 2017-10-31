@@ -28,6 +28,8 @@ import oap.testng.AbstractTest;
 import oap.testng.Env;
 import oap.util.Hash;
 import oap.ws.security.AuthService;
+import oap.ws.security.DefaultUser;
+import oap.ws.security.PasswordHasher;
 import oap.ws.security.Role;
 import oap.ws.security.Token;
 import org.testng.annotations.AfterTest;
@@ -46,7 +48,7 @@ public class AuthServiceTest extends AbstractTest {
     @BeforeTest
     public void setUp() {
         userStorage = new UserStorage( Env.tmpPath( "users" ) );
-        authService = new AuthService( userStorage, 1, "test" );
+        authService = new AuthService( userStorage, new PasswordHasher( "test" ), 1 );
     }
 
     @AfterTest
@@ -80,7 +82,7 @@ public class AuthServiceTest extends AbstractTest {
 
         userStorage.store( user );
 
-        authService = new AuthService( userStorage, 0, "test" );
+        authService = new AuthService( userStorage, new PasswordHasher( "test" ), 0 );
 
         final String id = authService.generateToken( user.email, "12345" ).get().id;
         assertNotNull( id );

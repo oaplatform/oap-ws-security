@@ -24,6 +24,7 @@
 
 package oap.ws.security.server;
 
+import oap.ws.security.DefaultUser;
 import oap.ws.security.Token;
 import oap.ws.security.User;
 
@@ -32,7 +33,7 @@ public final class Converters {
     private Converters() {
     }
 
-    public static User toUserDTO( User user ) {
+    public static DefaultUser toUserDTO( User user ) {
         final DefaultUser userDTO = new DefaultUser();
         userDTO.email = user.getEmail();
         userDTO.role = user.getRole();

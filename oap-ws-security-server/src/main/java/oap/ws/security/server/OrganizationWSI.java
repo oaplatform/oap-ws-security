@@ -1,5 +1,6 @@
 package oap.ws.security.server;
 
+import oap.ws.security.DefaultUser;
 import oap.ws.security.User;
 
 import java.util.List;
@@ -15,7 +16,7 @@ interface OrganizationWSI {
 
     void delete( String organizationId );
 
-    List<User> users( String organizationId );
+    List<? extends User> users( String organizationId );
 
     User userStore( DefaultUser storeUser, String organizationId, DefaultUser user );
 
